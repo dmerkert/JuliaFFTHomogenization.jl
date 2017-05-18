@@ -1,23 +1,40 @@
 module JuliaBasicScheme
 
 import Base.*
+FFTW.set_num_threads(Sys.CPU_CORES)
 
 export
-  #Types
+  #Types Linear Elasticity
   StiffnessTensor,
-  IsotropicStiffnessTensor,
-  TransversalIsotropicZ,
-  ElasticityVector,
+  BulkModulus,
+  YoungsModulus,
+  LamesFirstParameter,
+  ShearModulus,
+  PoissonsRatio,
   Strain,
   Stress,
   Displacement,
+  IsotropicStiffnessTensor,
+  TransversalIsotropicZ,
   StiffnessTensorField,
-  StrainStressField,
-
-  #methods
+  StrainField,
+  StressField,
+  Displacement,
+  #Methods Linear Elasticity
+  add!,
+  set!,
+  get!,
   mult!,
-  avg
+  avg,
+  FFT!,
+  IFFT!,
+  Gamma0
 
-include("Coefficients.jl")
+
+include("Types.jl")
+include("TypesLinearElasticity.jl")
+include("SolutionFieldArithmetic.jl")
+include("LinearElasticity.jl")
+include("GreenOperators.jl")
 
 end # module
