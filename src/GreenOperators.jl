@@ -2,59 +2,91 @@ abstract GreenOperator
 
 type Gamma0 <: GreenOperator end
 
-function mult!{C <: Complex, R <: Real}(
+function applyGammaHat!{C <: Complex, R <: Real}(
                              strain :: Strain{C},
+                             gamma :: Gamma0,
                              stress :: Stress{C},
                              referenceStiffness :: IsotropicStiffnessTensor{R},
                              FourierIndex :: Array{R,1}
                             )
 
+  if norm(FourierIndex) == 0.0
+    strain.val = zeros(strain.val)
+    return
+  end
+
   mu = referenceStiffness.mu.val
   lambda = referenceStiffness.lambda.val
+
   SSum = sumabs2(FourierIndex)
-
   factor1 = 1.0/(4.0mu*SSum)
-  factor2 = (lambda+mu)/(mu*(lambda+2.0mu)*SSum^2)
+  factor2 = (lambda+mu)/((lambda+2.0mu)*mu*SSum^2)
 
-  strain.val = zeros(stress.val);
+  strain.val = zeros(strain.val)
 
-  for i in [(1,1,1) (2,2,2) (3,3,3) (4,2,3) (5,1,3) (6,1,2)]
-    strain.val[i[1]] =  factor2 * 
-    (
-     FourierIndex[i[2]] * FourierIndex[i[3]] * 
-     (
-      FourierIndex[1]^2 * stress.val[1] +
-      FourierIndex[2]^2 * stress.val[2] +
-      FourierIndex[3]^2 * stress.val[3] +
-      FourierIndex[2]*FourierIndex[3] * stress.val[4] +
-      FourierIndex[1]*FourierIndex[3] * stress.val[5] +
-      FourierIndex[1]*FourierIndex[1] * stress.val[6]
-     )
-    )
-  end
+  gamma = zeros((6,6))
 
-  for i = 1:3
-    strain.val[i] -= factor1 * 4.0FourierIndex[i]^2 * stress.val[i]
-  end
+  gamma[1,1] = _evalGamma0Hat(factor1,factor2,FourierIndex,1,1,1,1)
+  gamma[1,2] = _evalGamma0Hat(factor1,factor2,FourierIndex,1,1,2,2)
+  gamma[1,3] = _evalGamma0Hat(factor1,factor2,FourierIndex,1,1,3,3)
+  gamma[1,4] = _evalGamma0Hat(factor1,factor2,FourierIndex,1,1,2,3)
+  gamma[1,5] = _evalGamma0Hat(factor1,factor2,FourierIndex,1,1,1,3)
+  gamma[1,6] = _evalGamma0Hat(factor1,factor2,FourierIndex,1,1,1,2)
 
-  strain.val[4] -= factor1 *
-  (
-   FourierIndex[2]*FourierIndex[2]*stress.val[2] +
-   FourierIndex[3]*FourierIndex[3]*stress.val[3] +
-   2.0FourierIndex[2]*FourierIndex[3]*stress.val[4]
-  )
+  gamma[2,1] = gamma[1,2]
+  gamma[2,2] = _evalGamma0Hat(factor1,factor2,FourierIndex,2,2,2,2)
+  gamma[2,3] = _evalGamma0Hat(factor1,factor2,FourierIndex,2,2,3,3)
+  gamma[2,4] = _evalGamma0Hat(factor1,factor2,FourierIndex,2,2,2,3)
+  gamma[2,5] = _evalGamma0Hat(factor1,factor2,FourierIndex,2,2,1,3)
+  gamma[2,6] = _evalGamma0Hat(factor1,factor2,FourierIndex,2,2,1,2)
 
-  strain.val[5] -= factor1 *
-  (
-   FourierIndex[1]*FourierIndex[1]*stress.val[1] +
-   FourierIndex[3]*FourierIndex[3]*stress.val[3] +
-   2.0FourierIndex[1]*FourierIndex[3]*stress.val[5]
-  )
+  gamma[3,1] = gamma[1,3]
+  gamma[3,2] = gamma[2,3]
+  gamma[3,3] = _evalGamma0Hat(factor1,factor2,FourierIndex,3,3,3,3)
+  gamma[3,4] = _evalGamma0Hat(factor1,factor2,FourierIndex,3,3,2,3)
+  gamma[3,5] = _evalGamma0Hat(factor1,factor2,FourierIndex,3,3,1,3)
+  gamma[3,6] = _evalGamma0Hat(factor1,factor2,FourierIndex,3,3,1,2)
 
-  strain.val[6] -= factor1 *
-  (
-   FourierIndex[1]*FourierIndex[1]*stress.val[1] +
-   FourierIndex[2]*FourierIndex[2]*stress.val[2] +
-   2.0FourierIndex[1]*FourierIndex[2]*stress.val[6]
-  )
+  gamma[4,1] = gamma[1,4]
+  gamma[4,2] = gamma[2,4]
+  gamma[4,3] = gamma[3,4]
+  gamma[4,4] = _evalGamma0Hat(factor1,factor2,FourierIndex,2,3,2,3)
+  gamma[4,5] = _evalGamma0Hat(factor1,factor2,FourierIndex,2,3,1,3)
+  gamma[4,6] = _evalGamma0Hat(factor1,factor2,FourierIndex,2,3,1,2)
+
+  gamma[5,1] = gamma[1,5]
+  gamma[5,2] = gamma[2,5]
+  gamma[5,3] = gamma[3,5]
+  gamma[5,4] = gamma[4,5]
+  gamma[5,5] = _evalGamma0Hat(factor1,factor2,FourierIndex,1,3,1,3)
+  gamma[5,6] = _evalGamma0Hat(factor1,factor2,FourierIndex,1,3,1,2)
+
+  gamma[6,1] = gamma[1,6]
+  gamma[6,2] = gamma[2,6]
+  gamma[6,3] = gamma[3,6]
+  gamma[6,4] = gamma[4,6]
+  gamma[6,5] = gamma[5,6]
+  gamma[6,6] = _evalGamma0Hat(factor1,factor2,FourierIndex,1,2,1,2)
+
+  #Corrections for Voigt notation
+  gamma[4:6,1:6] = 2.0gamma[4:6,1:6]
+  gamma[1:6,4:6] = 2.0gamma[1:6,4:6]
+
+  strain.val = gamma*stress.val
+end
+
+@inline function _evalGamma0Hat(factor1,factor2,FourierIndex, i,j,k,h)
+  -(
+    factor1*(
+             (k==i)*FourierIndex[h]*FourierIndex[j] +
+             (h==i)*FourierIndex[k]*FourierIndex[j] +
+             (k==j)*FourierIndex[h]*FourierIndex[i] +
+             (h==j)*FourierIndex[k]*FourierIndex[i]
+            ) - factor2*(
+                         FourierIndex[i]*
+                         FourierIndex[j]*
+                         FourierIndex[k]*
+                         FourierIndex[h]
+                        )
+   )
 end

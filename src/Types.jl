@@ -11,6 +11,7 @@ abstract GradientSolutionTensorField <: SolutionTensorField
 abstract FluxSolutionTensorField <: SolutionTensorField
 abstract PrimarySolutionTensorField <: SolutionTensorField
 
+abstract Pattern
 
 
 

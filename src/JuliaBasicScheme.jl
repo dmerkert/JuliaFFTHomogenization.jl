@@ -1,6 +1,12 @@
 module JuliaBasicScheme
 
 import Base.*
+import Base.getindex
+using ArgCheck
+using MPAWL
+import Base.size
+using Polynomials
+
 FFTW.set_num_threads(Sys.CPU_CORES)
 
 export
@@ -28,7 +34,15 @@ export
   avg,
   FFT!,
   IFFT!,
-  Gamma0
+  Gamma0,
+  RotationMatrixNormal,
+  DepolarizationFactors,
+  fromVoigt!,
+  toVoigt!,
+  applyGammaHat!,
+  Elasticity_Hashin_ellipsoid,
+  Elasticity_Hashin_ellipsoid_analytic,
+  Lattice
 
 
 include("Types.jl")
@@ -36,5 +50,7 @@ include("TypesLinearElasticity.jl")
 include("SolutionFieldArithmetic.jl")
 include("LinearElasticity.jl")
 include("GreenOperators.jl")
+include("Misc.jl")
+include("Elasticity_Hashin_ellipsoid.jl")
 
 end # module

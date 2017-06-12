@@ -11,6 +11,11 @@ function mult!{R}(stress::Stress{R},stiffness::IsotropicStiffnessTensor{R},strai
   stress
 end
 
+function mult!{R}(stress::Stress{R},stiffness::DiagonalStiffnessTensor{R},strain::Strain{R})
+  stress.val = stiffness.v.*strain.val
+  stress
+end
+
 function mult!{R}(stress::Stress{R},stiffness::TransversalIsotropicZ{R},strain::Strain{R})
   gamma = 1.0 / (1.0 - stiffness.nu_p.val^2 -
                   2.0stiffness.nu_pt.val*stiffness.nu_tp.val -
