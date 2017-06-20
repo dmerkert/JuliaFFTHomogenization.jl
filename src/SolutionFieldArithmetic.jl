@@ -17,6 +17,27 @@ function _mult!(
   fluxField
 end
 
+function _multShifted!(
+                fluxField::FluxSolutionTensorField,
+                gradientField::GradientSolutionTensorField,
+                coefficientField::CoefficientTensorField,
+                coefficient::CoefficientTensor,
+                gradient::GradientSolutionTensor,
+                flux::FluxSolutionTensor,
+                Rpre
+               )
+
+  fluxField.val = gradientField.val
+
+  for Ipre in Rpre
+    get!(gradient,gradientField,Ipre)
+    mult!(flux,get(coefficientField,Ipre)-coefficient,gradient)
+    set!(flux,fluxField,Ipre)
+  end
+  fluxField
+end
+
+
 function _avg!(sum::SolutionTensor,field::SolutionTensorField,Iter)
   for I in Iter
     add!(sum,field,I)
@@ -53,3 +74,22 @@ function _setZerothFourierCoefficient!(
   gradientFrequencyField
 end
 
+function +{T <: SolutionTensor}(A :: T,B :: T)
+  T(A.val+B.val)
+end
+
+function -{T <: SolutionTensor}(A :: T,B :: T)
+  T(A.val-B.val)
+end
+
+function +{T <: SolutionTensorField}(A :: T,B :: T)
+  T(A.val+B.val)
+end
+
+function -{T <: SolutionTensorField}(A :: T,B :: T)
+  T(A.val-B.val)
+end
+
+function norm{T <: SolutionTensorField}(A :: T)
+  sqrt(sum(abs(A.val[:]).^2))
+end

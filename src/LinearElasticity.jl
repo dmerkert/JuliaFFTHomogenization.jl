@@ -1,44 +1,23 @@
-function mult!{R}(stress::Stress{R},stiffness::IsotropicStiffnessTensor{R},strain::Strain{R})
-  stress.val[1] = (2.0stiffness.mu.val+stiffness.lambda.val)*strain.val[1]+
-  stiffness.lambda.val*(strain.val[2]+strain.val[3])
-  stress.val[2] = (2.0stiffness.mu.val+stiffness.lambda.val)*strain.val[2]+
-  stiffness.lambda.val*(strain.val[1]+strain.val[3])
-  stress.val[3] = (2.0stiffness.mu.val+stiffness.lambda.val)*strain.val[3]+
-  stiffness.lambda.val*(strain.val[1]+strain.val[2])
-  stress.val[4] = stiffness.mu.val*strain.val[4]
-  stress.val[5] = stiffness.mu.val*strain.val[5]
-  stress.val[6] = stiffness.mu.val*strain.val[6]
-  stress
-end
-
-function mult!{R}(stress::Stress{R},stiffness::DiagonalStiffnessTensor{R},strain::Strain{R})
-  stress.val = stiffness.v.*strain.val
-  stress
-end
-
-function mult!{R}(stress::Stress{R},stiffness::TransversalIsotropicZ{R},strain::Strain{R})
-  gamma = 1.0 / (1.0 - stiffness.nu_p.val^2 -
-                  2.0stiffness.nu_pt.val*stiffness.nu_tp.val -
-                  2.0stiffness.nu_p.val*stiffness.nu_pt.val*stiffness.nu_tp.val);
-  c11 = stiffness.E_p.val*(1.0-stiffness.nu_pt.val*stiffness.nu_tp.val)*gamma;
-  c33 = stiffness.E_t.val*(1.0-stiffness.nu_p.val^2)*gamma;
-  c12 = stiffness.E_p.val*(stiffness.nu_p.val+stiffness.nu_pt.val*stiffness.nu_tp.val)*gamma;
-  c13 = stiffness.E_p.val*(stiffness.nu_tp.val+stiffness.nu_p.val*stiffness.nu_tp.val)*gamma;
-  c44 = stiffness.mu_t.val;
-
-  stress.val[1] = c11*strain.val[1]+c12*strain.val[2]+c13*strain.val[3]
-  stress.val[2] = c12*strain.val[1]+c11*strain.val[2]+c13*strain.val[3]
-  stress.val[3] = c13*strain.val[1]+c13*strain.val[2]+c33*strain.val[3]
-  stress.val[4] = c44/2.0*strain.val[4]
-  stress.val[5] = c44/2.0*strain.val[5]
-  stress.val[6] = (c11-c12)/4.0*strain.val[6]
-  stress
-end
-
 function mult!{R}(
                   stressField::StressField{R},
                   strainField::StrainField{R},
                   stiffnessField::StiffnessTensorField
+              )
+
+  @argcheck size(strainField) == size(stiffnessField)
+  stressField.val = strainField.val
+  strain = Strain(R)
+  stress = Stress(R)
+
+  Rpre = CartesianRange(size(strainField))
+  _mult!(stressField,strainField,stiffnessField,strain,stress,Rpre)
+end
+
+function multShifted!{R}(
+                  stressField::StressField{R},
+                  strainField::StrainField{R},
+                  stiffnessField::StiffnessTensorField,
+                  stiffnessTensor::StiffnessTensor
               )
 
   size(strainField) == size(stiffnessField) || error("Sizes not compatible")
@@ -47,8 +26,17 @@ function mult!{R}(
   stress = Stress(R)
 
   Rpre = CartesianRange(size(strainField))
-  _mult!(stressField,strainField,stiffnessField,strain,stress,Rpre)
+  _multShifted!(stressField,
+                strainField,
+                stiffnessField,
+                stiffnessTensor,
+                strain,
+                stress,
+                Rpre)
 end
+
+
+
 
 function avg{R}(strainField::StrainField{R})
   sum = Strain(R)
@@ -78,4 +66,57 @@ function IFFT!{C <: Complex, R <: Real}(
                                       )
   _FFT!(strainField,strainFrequencyField,1:(length(size(strainField.val))-1))
   strainField
+end
+
+function applyGammaHat{C <: Complex}(
+                             stressFrequencyField :: StressField{C},
+                             gamma :: GreenOperator,
+                             referenceStiffness :: IsotropicStiffnessTensor,
+                             lattice :: Lattice
+                            )
+
+  strainFrequencyField = StrainField(stressFrequencyField.val)
+  strain = Strain(Complex128)
+  stress = Stress(Complex128)
+  for index in getFrequencyIterator(lattice)
+    FourierIndex = getFrequencyPoint(lattice,index)
+    stress = stressFrequencyField[index]
+    applyGammaHat!(strain,gamma,stress,referenceStiffness,FourierIndex)
+    strainFrequencyField[index] = strain
+  end
+  strainFrequencyField
+end
+
+function computePolarization{R <: Real}(strainField :: StrainField{R},
+                                        stiffnessField :: StiffnessTensorField,
+                                        referenceStiffness :: StiffnessTensor
+                                       )
+  stressField = StressField(strainField.val)
+  multShifted!(stressField,
+               strainField,
+               stiffnessField,
+               referenceStiffness
+              )
+  stressField
+end
+
+function transform{R <: Real}(stressField::StressField{R})
+  stressFrequencyField = StressField(Complex128,size(stressField))
+  FFT!(stressFrequencyField,stressField)
+  stressFrequencyField
+end
+
+function inverseTransform{C <: Complex}(strainFrequencyField :: StrainField{C})
+  strainField = StrainField(Float64,size(strainFrequencyField))
+  IFFT!(strainField,strainFrequencyField)
+  strainField
+end
+
+function setAverage!{C <: Complex}(strainFrequencyField :: StrainField{C},
+                                  macroscopicStrain :: Strain{C}
+                                 )
+
+  index = size(strainFrequencyField)
+  strainFrequencyField.val[index,:] = macroscopicStrain.val
+  strainFrequencyField
 end
