@@ -50,6 +50,8 @@ end
   strainF+strainF
   strain.val = [1,2,3,4,5,6]
   init!(strainF,strain)
+
+  b = copy(strainF)
 end
 
 @testset "Coefficient Tensor Fields" begin
@@ -57,8 +59,28 @@ end
   mu = ShearModulus(6.34331247)
 
   CIso = IsotropicStiffnessTensor(l,mu)
+  CIso2 = IsotropicStiffnessTensor(l+1,mu-1)
   CTrans = convert(TransversalIsotropicZStiffnessTensor,CIso)
+  CTrans2 = convert(TransversalIsotropicZStiffnessTensor,CIso2)
 
   CIsoField = CoefficientTensorField(IsotropicStiffnessTensor,(3,3))
-  
+  CTransField = CoefficientTensorField(TransversalIsotropicZStiffnessTensor,(3,3))
+  for i in 1:3
+    for j in 1:3
+      if i == j
+        CIsoField[i,j] = CIso
+        CTransField[i,j] = CTrans
+      else
+        CIsoField[i,j] = CIso2
+        CTransField[i,j] = CTrans2
+      end
+
+    end
+  end
+  solver = BasicScheme()
+  C0 = getReferenceTensor(CIsoField,solver)
+  C0Trans = getReferenceTensor(CTransField,solver)
+
+  C0An = convert(AnisotropicStiffnessTensor,C0)
+  C0An2 = convert(AnisotropicStiffnessTensor,C0Trans)
 end
