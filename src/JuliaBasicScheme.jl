@@ -8,6 +8,9 @@ import Base.getindex
 import Base.norm
 import Base.promote_rule
 import Base.convert
+import Base.length
+import Base.copy
+import Base.copy!
 using ArgCheck
 using MPAWL
 import Base.size
@@ -17,6 +20,8 @@ using IterationManagers
 FFTW.set_num_threads(Sys.CPU_CORES)
 
 export
+  #MPAWL
+  Lattice,
   #Types
   CoefficientTensor,
   SolutionTensor,
@@ -71,7 +76,13 @@ export
   LinearElasticityHomogenizationProblem,
   #Solvers
   BasicScheme,
-  solve!
+  solve!,
+  #referenceTensor
+  getReferenceTensor,
+  #ElasticityHashinEllipsoid
+  ElasticityHashinEllipsoid,
+  ElasticityHashinEllipsoidAnalytic
+
 
 
   
@@ -90,14 +101,8 @@ include("Problem.jl")
 include("Solvers.jl")
 include("ReferenceTensor.jl")
 
-
-
-
-#include("TypesLinearElasticity.jl")
-#include("SolutionFieldArithmetic.jl")
-#include("LinearElasticity.jl")
-#include("Misc.jl")
-#include("Elasticity_Hashin_ellipsoid.jl")
-#include("Ellipsoids.jl")
+include("Misc.jl")
+include("Ellipsoids.jl")
+include("Elasticity_Hashin_ellipsoid.jl")
 
 end # module

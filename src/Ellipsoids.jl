@@ -62,6 +62,7 @@ function CartesianToEllipsoidal{R <: Real}(x::Array{R,1},c1::R,c2::R,c3::R)
   x1 = x[1]
   x2 = x[2]
   x3 = x[3]
+  p = 0.0
 
   if (c3 == Inf)
     #polynomial coefficients of polynomial a*p^2+b*p+c=0
@@ -100,5 +101,6 @@ function CartesianToEllipsoidal{R <: Real}(x::Array{R,1},c1::R,c2::R,c3::R)
                    ) < 1e-12)
 
   end
+  p
 end
 

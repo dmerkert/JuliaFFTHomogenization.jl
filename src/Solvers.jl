@@ -1,7 +1,7 @@
 immutable BasicScheme <: Solver
-  tol :: Float64
-  maxIter :: Int
-  verbose :: Bool
+  tol       :: Float64
+  maxIter   :: Int
+  verbose   :: Bool
   printSkip :: Int
 
   BasicScheme(;
@@ -9,7 +9,7 @@ immutable BasicScheme <: Solver
                maxIter=100,
                verbose=false,
                printSkip=50
-              ) = new(lattice,gamma,tol,maxIter,verbose,printSkip)
+              ) = new(tol,maxIter,verbose,printSkip)
 end
 
 function solve!(problem :: EffectiveTensorProblem,
@@ -17,10 +17,10 @@ function solve!(problem :: EffectiveTensorProblem,
                 solver :: Solver)
 
   initializeProblem!(problem)
-  for i = 1:size(problem)
-    subproblem = getMacroscopicGradientProblem(problem,i)
+  for i = 1:length(problem)
+    subproblem = problem[i]
     solve!(subproblem,approximationMethod,solver)
-    setMacroscopicGradientProblem!(problem,subproblem,i)
+    problem[i] = subproblem
   end
   problem
 end
@@ -37,42 +37,64 @@ function solve!(problem :: MacroscopicGradientProblem,
          )
 end
 
-function _solve!{G <: GradientSolutionTensor, R}(gradient ::
-                                                 SolutionTensorField{R,G},
-                coefficientField :: CoefficientTensorField,
-                macroscopicGradient :: G,
-                solver :: BasicScheme,
-                gamma :: GreenOperator,
-                transformation :: Transformation,
-                lattice :: Lattice
-               )
+function _solve!{G <: GradientSolutionTensor,
+                 F <: FluxSolutionTensor,
+                 R <: Real,
+                 C <: Complex
+                }(
+                  gradient            :: SolutionTensorField{R,G},
+                  flux                :: SolutionTensorField{R,F},
+                  gradientFourier     :: SolutionTensorField{C,G},
+                  fluxFourier         :: SolutionTensorField{C,F},
+                  coefficientField    :: CoefficientTensorField,
+                  macroscopicGradient :: G,
+                  solver              :: BasicScheme,
+                  gamma               :: GreenOperator,
+                  transformation      :: Transformation,
+                  lattice             :: Lattice
+                   )
 
-  initialize!(gradientField,macroscopicGradient)
+  init!(gradient,macroscopicGradient)
 
-  referenceCoefficient = zeros(33)
+  referenceTensor = getReferenceTensor(coefficientField,solver)
 
   mgr = DefaultManager(solver.tol,
                        solver.maxIter,
                        solver.verbose,
                        solver.printSkip)
-  istate = DefaultState(gradientField)
 
-  managed_iteration(mgr, istate; by=(x,y)->norm(x-y)) do gradient
-   # gradient = computePolarization(gradient,
-   #                                coefficientField,
-   #                                referenceCoefficient
-   #                               )
-   # gradient = transform(gradient)
-   # gradient = applyGammaHat(gradient,
-   #                          gamma,
-   #                          referenceStiffness,
-   #                          lattice
-   #                         )
-   # gradient = setAverage!(gradient,
-   #                        macroscopicGradient,
-   #                       )
-   # gradient = inverseTransform(gradient)
+  istate = DefaultState(gradient)
+
+  iii = managed_iteration(mgr, istate; by=(x,y)->norm(x-y)) do _gradient
+    __gradient = copy(_gradient)
+    flux = mult!(flux,
+                 coefficientField-referenceTensor,
+                 __gradient
+                )
+    transform!(fluxFourier,
+               flux,
+               transformation,
+               lattice
+              )
+    mult!(gradientFourier,
+          gamma,
+          fluxFourier,
+          referenceTensor,
+          lattice
+         )
+    setAveragingFrequency!(gradientFourier,
+                           macroscopicGradient,
+                           transformation,
+                           lattice
+                          )
+    transformInverse!(__gradient,
+                      gradientFourier,
+                      transformation,
+                      lattice
+                     )
+    __gradient
   end
-
+  @show iii.n
+  @show iii.change
 
 end

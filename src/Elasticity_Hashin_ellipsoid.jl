@@ -15,7 +15,7 @@
 # OUTPUT
 #    geometryFunction: returns a function with
 #    C =  geometryFunction(points) where C has the form [3, 3, quadrature point, patternArray] and point is a [component,|det(M)|] matrix
-function Elasticity_Hashin_ellipsoid{R <: Real}(lattice :: Lattice;
+function ElasticityHashinEllipsoid{R <: Real}(lattice :: Lattice;
                                                 c1::R=0.5,
                                                 c2::R=0.6,
                                                 c3::R=Inf,
@@ -37,19 +37,12 @@ function Elasticity_Hashin_ellipsoid{R <: Real}(lattice :: Lattice;
   @argcheck pOuter > -c1^2
   @argcheck pInner > -c1^2
 
-  muInner = ShearModulus()
-  kappaInner = BulkModulus()
-  lambdaInner = LamesFirstParameter()
-  muOuter = ShearModulus()
-  kappaOuter = BulkModulus()
-  lambdaOuter = LamesFirstParameter()
-
-  convert!(muInner,EInner,nuInner)
-  convert!(kappaInner,EInner,nuInner)
-  convert!(lambdaInner,kappaInner,muInner)
-  convert!(muOuter,EOuter,nuOuter)
-  convert!(kappaOuter,EOuter,nuOuter)
-  convert!(lambdaOuter,kappaOuter,muOuter)
+  muInner     = convert(ShearModulus,EInner,nuInner)
+  kappaInner  = convert(BulkModulus,EInner,nuInner)
+  lambdaInner = convert(LamesFirstParameter,kappaInner,muInner)
+  muOuter     = convert(ShearModulus,EOuter,nuOuter)
+  kappaOuter  = convert(BulkModulus,EOuter,nuOuter)
+  lambdaOuter = convert(LamesFirstParameter,kappaOuter,muOuter)
 
   #rotation matrix
   rotation = RotationMatrixNormal([1.0;0.0;0.0],normal)
@@ -87,32 +80,32 @@ function Elasticity_Hashin_ellipsoid{R <: Real}(lattice :: Lattice;
 
   epsilon0 = Strain(Float64)
   epsilonMatrix =
-  (3.0kappaOuter.val+4.0muOuter.val)/
-  (9.0(kappaInner.val-kappaOuter.val))*eye(3) +
+  (3.0kappaOuter+4.0muOuter)/
+  (9.0(kappaInner-kappaOuter))*eye(3) +
   f2*M
 
   toVoigt!(epsilon0,epsilonMatrix)
-  Transform!(epsilon0,rotation)
+  transform!(epsilon0,rotation)
 
   tau0 = Stress(Float64)
-  tauMatrix = 
+  tauMatrix =
   (
-   kappaOuter.val*(kappaInner.val+4.0/3.0*muOuter.val)/
-   (kappaInner.val-kappaOuter.val) +
-   4.0muOuter.val*f1/3.0
-  ) * eye(3) + 
-  2.0muOuter.val*f2*(M-eye(3)/3.0)
+   kappaOuter*(kappaInner+4.0/3.0*muOuter)/
+   (kappaInner-kappaOuter) +
+   4.0muOuter*f1/3.0
+  ) * eye(3) +
+  2.0muOuter*f2*(M-eye(3)/3.0)
 
   toVoigt!(tau0,tauMatrix)
-  Transform!(tau0,rotation)
+  transform!(tau0,rotation)
 
   EllipsoidMatrixInner = rotation*diagm([lc1^-2,lc2^-2,lc3^-2])*rotation';
   EllipsoidMatrixOuter = rotation*diagm([le1^-2,le2^-2,le3^-2])*rotation';
 
-  C = StiffnessTensorField(lattice.size)
+  C = CoefficientTensorField(StiffnessTensor,lattice.size)
 
   for index in getSamplingIterator(lattice)
-    point = getSamplingPoint(lattice,index)
+    point = getSamplingPoint(lattice,index)/(2.0pi)
     if dot(point,EllipsoidMatrixInner*point) <= 1.0
       C.val[index] = IsotropicStiffnessTensor(lambdaInner,muInner)
     elseif dot(point,EllipsoidMatrixOuter*point) <= 1.0
@@ -130,18 +123,18 @@ function Elasticity_Hashin_ellipsoid{R <: Real}(lattice :: Lattice;
   (C,epsilon0)
 end
 
-function Elasticity_Hashin_ellipsoid_analytic{R <: Real}(lattice :: Lattice;
-                                                         c1::R=0.5,
-                                                         c2::R=0.6,
-                                                         c3::R=Inf,
-                                                         pInner::R=-0.25+0.2^2,
-                                                         pOuter::R=-0.25+0.3^2,
-                                                         nuInner::PoissonsRatio=PoissonsRatio(0.3),
-  nuOuter::PoissonsRatio=PoissonsRatio(0.3),
-  EInner::YoungsModulus=YoungsModulus(10.0),
-  EOuter::YoungsModulus=YoungsModulus(1.0),
-  normal::Array{R,1}=[1.0,0.0,0.0]
- )
+function ElasticityHashinEllipsoidAnalytic{R <: Real}(lattice :: Lattice;
+                                                      c1::R=0.5,
+                                                      c2::R=0.6,
+                                                      c3::R=Inf,
+                                                      pInner::R=-0.25+0.2^2,
+                                                      pOuter::R=-0.25+0.3^2,
+                                                      nuInner::PoissonsRatio=PoissonsRatio(0.3),
+                                                      nuOuter::PoissonsRatio=PoissonsRatio(0.3),
+                                                      EInner::YoungsModulus=YoungsModulus(10.0),
+                                                      EOuter::YoungsModulus=YoungsModulus(1.0),
+                                                      normal::Array{R,1}=[1.0,0.0,0.0]
+                                                     )
   @argcheck c1 > 0
   @argcheck c2 > 0
   @argcheck c3 > 0
@@ -152,19 +145,12 @@ function Elasticity_Hashin_ellipsoid_analytic{R <: Real}(lattice :: Lattice;
   @argcheck pOuter > -c1^2
   @argcheck pInner > -c1^2
 
-  muInner = ShearModulus()
-  kappaInner = BulkModulus()
-  lambdaInner = LamesFirstParameter()
-  muOuter = ShearModulus()
-  kappaOuter = BulkModulus()
-  lambdaOuter = LamesFirstParameter()
-
-  convert!(muInner,EInner,nuInner)
-  convert!(kappaInner,EInner,nuInner)
-  convert!(lambdaInner,kappaInner,muInner)
-  convert!(muOuter,EOuter,nuOuter)
-  convert!(kappaOuter,EOuter,nuOuter)
-  convert!(lambdaOuter,kappaOuter,muOuter)
+  muInner     = convert(ShearModulus,EInner,nuInner)
+  kappaInner  = convert(BulkModulus,EInner,nuInner)
+  lambdaInner = convert(LamesFirstParameter,kappaInner,muInner)
+  muOuter     = convert(ShearModulus,EOuter,nuOuter)
+  kappaOuter  = convert(BulkModulus,EOuter,nuOuter)
+  lambdaOuter = convert(LamesFirstParameter,kappaOuter,muOuter)
 
   #rotation matrix
   rotation = RotationMatrixNormal([1.0;0.0;0.0],normal)
@@ -202,52 +188,47 @@ function Elasticity_Hashin_ellipsoid_analytic{R <: Real}(lattice :: Lattice;
 
   epsilon0 = Strain(Float64)
   epsilonMatrix =
-  (3.0kappaOuter.val+4.0muOuter.val)/
-  (9.0(kappaInner.val-kappaOuter.val))*eye(3) +
+  (3.0kappaOuter+4.0muOuter)/
+  (9.0(kappaInner-kappaOuter))*eye(3) +
   f2*M
 
   toVoigt!(epsilon0,epsilonMatrix)
-  Transform!(epsilon0,rotation)
+  transform!(epsilon0,rotation)
 
   tau0 = Stress(Float64)
-  tauMatrix = 
+  tauMatrix =
   (
-   kappaOuter.val*(kappaInner.val+4.0/3.0*muOuter.val)/
-   (kappaInner.val-kappaOuter.val) +
-   4.0muOuter.val*f1/3.0
-  ) * eye(3) + 
-  2.0muOuter.val*f2*(M-eye(3)/3.0)
+   kappaOuter*(kappaInner+4.0/3.0*muOuter)/
+   (kappaInner-kappaOuter) +
+   4.0muOuter*f1/3.0
+  ) * eye(3) +
+  2.0muOuter*f2*(M-eye(3)/3.0)
 
   toVoigt!(tau0,tauMatrix)
-  Transform!(tau0,rotation)
+  transform!(tau0,rotation)
 
-  EllipsoidMatrixInner = rotation*diagm([lc1^-2,lc2^-2,lc3^-2])*rotation';
-  EllipsoidMatrixOuter = rotation*diagm([le1^-2,le2^-2,le3^-2])*rotation';
+  EllipsoidMatrixInner = diagm([lc1^-2,lc2^-2,lc3^-2]);
+  EllipsoidMatrixOuter = diagm([le1^-2,le2^-2,le3^-2]);
+
 
   sigma2 = 1.0;
-  sigma1 =
-  1.0+9.0*(kappaInner.val-kappaOuter.val)/(3.0*kappaOuter.val+4.0*muOuter.val);
+  sigma1 = 1.0+9.0(kappaInner-kappaOuter)/(3.0kappaOuter+4.0muOuter);
 
   epsilon = StrainField(Float64,lattice.size)
 
   for index in getSamplingIterator(lattice)
-    point = rotation'*getSamplingPoint(lattice,index)
+    point = rotation'*(getSamplingPoint(lattice,index)/(2.0pi))
     if dot(point,EllipsoidMatrixInner*point) <= 1.0
       s = Strain([1.0/(sigma1-1.0);1.0/(sigma1-1.0);1.0/(sigma1-1.0);0.0;0.0;0.0])
-      set!(epsilon,s,index)
+      epsilon[index] = s
     elseif dot(point,EllipsoidMatrixOuter*point) > 1.0
-      set!(epsilon,epsilon0,index)
+      epsilon[index] = epsilon0
     else
       p = CartesianToEllipsoidal(point,c1,c2,c3)
 
       c = [c1;c2;c3]
       dc = [dc1;dc2;dc3]
-    
-    # Inline conditional taken from
-    # http://blogs.mathworks.com/loren/2013/01/10/introduction-to-functional-programming-with-anonymous-functions-part-1/#c8d04efb-1a2d-4c35-afff-dd52e6c660d2
-    #iif = @(varargin) varargin{2 * find([varargin{1:2:end}], 1, 'first')}();
-    #
-    
+
     dpdx = zeros(3)
     if c3 == Inf
       dpdx =
@@ -299,7 +280,7 @@ function Elasticity_Hashin_ellipsoid_analytic{R <: Real}(lattice :: Lattice;
      point[3]*integrand[3]*dpdx[3]
     )
 
-    Transform!(s,rotation)
+    transform!(s,rotation)
     epsilon[index] = s
     end
   end

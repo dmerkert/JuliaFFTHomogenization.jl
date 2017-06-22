@@ -189,3 +189,13 @@ function toVoigt!{R <: Number}(stress :: Stress{R}, A :: Array{R,2})
   stress
 end
 
+function transform!{R}(tensor :: SolutionTensor, A :: Array{R,2})
+  @argcheck size(A) == (3,3)
+  @argcheck isa(tensor,Strain) || isa(tensor,Stress)
+
+  TensorArray = Array{Float64}((3,3))
+
+  fromVoigt!(TensorArray,tensor)
+  TensorArray = A*TensorArray*A'
+  toVoigt!(tensor,TensorArray)
+end

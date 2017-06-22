@@ -15,18 +15,32 @@ abstract EffectiveTensorProblem <: Problem
 type SolutionTensorField{R <: Number, F <: SolutionTensor}
   val :: Array{R}
 
-  function SolutionTensorField(r :: Type{R},f :: Type{F},dims)
-    new(Array{R}(dims))
-  end
+  SolutionTensorField(r :: Type{R},f :: Type{F},dims) = new(Array{R}(dims))
 
-  function SolutionTensorField(r :: Type{R},f :: Type{F},dims,val :: R)
-    new(val*ones(R,dims))
-  end
+  SolutionTensorField(r :: Type{R},f :: Type{F},dims,val :: R) =
+  new(val*ones(R,dims))
+
+  SolutionTensorField(r :: Type{R},f :: Type{F},val :: Array{R}) = new(val)
 end
 SolutionTensorField{R,F}(r :: Type{R},f :: Type{F},dims) =
 SolutionTensorField{R,F}(r,f,dims)
 SolutionTensorField{R,F}(r :: Type{R},f :: Type{F},dims,val :: R) =
 SolutionTensorField{R,F}(r,f,dims,val)
+
+function copy!{R,F}(dest :: SolutionTensorField{R,F},
+                    source :: SolutionTensorField{R,F})
+  copy!(dest.val,source.val)
+  dest
+end
+
+function copy{R,F}(source :: SolutionTensorField{R,F})
+  dest = SolutionTensorField(R,F,size(source.val))
+  copy!(dest,source)
+end
+
+function norm(S :: SolutionTensorField)
+  norm(S.val[:])
+end
 
 type CoefficientTensorField{T <: CoefficientTensor}
   val :: Array{T}
@@ -35,6 +49,8 @@ type CoefficientTensorField{T <: CoefficientTensor}
     new(Array{T}(dims))
   end
 end
+CoefficientTensorField{T}(t :: Type{T}, dims) =
+CoefficientTensorField{T}(t,dims)
 
 size(A :: CoefficientTensorField) = size(A.val)
 
@@ -64,9 +80,19 @@ for op in [:+,:-]
                             B :: CoefficientTensorField{S})
     @argcheck size(A) == size(B)
     C = CoefficientTensorField(promote_type(T,S),size(A))
-    for i in CartesianRange(ones(size(A)),size(A))
+    for i in CartesianRange(size(A))
       C[i] = ($op)(A[i],B[i])
     end
+    C
+  end
+
+  @eval function ($op){T,S <: CoefficientTensor}(A :: CoefficientTensorField{T},
+                                                 B :: S)
+    C = CoefficientTensorField(promote_type(T,S),size(A))
+    for i in CartesianRange(size(A))
+      C[i] = ($op)(A[i],B)
+    end
+    C
   end
 end
 
@@ -75,7 +101,7 @@ function mult!(c :: SolutionTensorField,
                b :: SolutionTensorField)
   @argcheck size(A) == size(b) == size(c)
 
-  for i in CartesianRange(ones(size(A)),size(A))
+  for i in CartesianRange(size(A))
     c[i] = mult!(c[i],A[i],b[i])
   end
   c
@@ -90,8 +116,9 @@ function mult!(c :: SolutionTensorField,
   @argcheck size(b) == size(c)
 
   for i in getFrequencyIterator(L)
-    frequency = getFrequencyPoint(M,i)
-    c[i] = mult!(c[i],G,b[i],referenceCoefficient,frequency)
+    frequency = getFrequencyPoint(L,i)
+    mult!(c[i],G,b[i],referenceCoefficient,2.0pi*frequency)
+    c[i] = mult!(c[i],G,b[i],referenceCoefficient,2.0pi*frequency)
   end
   c
 end

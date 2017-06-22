@@ -29,7 +29,14 @@ function initializeProblem!(P :: LinearElasticityProblem)
 end
 
 function unpackProblem(P :: LinearElasticityProblem)
-  (P.strain,
+  stress = StressField(Float64,get(P.strain).val)
+  strainFourier = StrainField(Complex128,size(get(P.strain)))
+  stressFourier = StressField(Complex128,strainFourier.val)
+
+  (get(P.strain),
+   stress,
+   strainFourier,
+   stressFourier,
    P.stiffness,
    P.macroscopicStrain)
 end
@@ -58,10 +65,9 @@ function initializeProblem!(P :: LinearElasticityHomogenizationProblem)
   P
 end
 
-size(P :: LinearElasticityHomogenizationProblem) = 6
+length(P :: LinearElasticityHomogenizationProblem) = 6
 
-function getMacroscopicGradientProblem(P :: LinearElasticityHomogenizationProblem,
-                                       i :: Int)
+function Base.getindex(P :: LinearElasticityHomogenizationProblem, i :: Int)
   @argcheck 1 <= i <= 6
   vector = zeros(Float64,6)
   vector[i] = 1.0
@@ -72,10 +78,13 @@ function getMacroscopicGradientProblem(P :: LinearElasticityHomogenizationProble
                          )
 end
 
-function setMacroscopicGradientProblem!(P :: LinearElasticityHomogenizationProblem,
-                                        S :: LinearElasticityProblem,
-                                        i :: Int)
+function Base.setindex!(P :: LinearElasticityHomogenizationProblem,
+                        S :: LinearElasticityProblem,
+                        i :: Int)
   @argcheck 1 <= i <= 6
+  if isnull(P.effectiveStiffness)
+    initializeProblem!(P)
+  end
   P.effectiveStiffness[:,i] = get(S.averageStress).val
   P
 end

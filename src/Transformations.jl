@@ -9,7 +9,7 @@ function transform!{C <: Complex,
                        L :: Lattice
                       )
 
-  FFT!(frequencyField.val,pointField.val,L)
+  frequencyField.val = FFT!(frequencyField.val,pointField.val,L)
   frequencyField
 end
 
@@ -22,7 +22,7 @@ function transformInverse!{C <: Complex,
                               L :: Lattice
                              )
 
-  IFFT!(pointField.val,frequencyField.val,L)
+  pointField.val = IFFT!(pointField.val,frequencyField.val,L)
   pointField
 end
 
