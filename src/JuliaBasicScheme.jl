@@ -89,20 +89,20 @@ export
 
 
 
-include("Types.jl")
-include("StiffnessParameters.jl")
-include("StrainStressDisplacement.jl")
-include("StrainStressDisplacementFields.jl")
-include("StiffnessTensors.jl")
-include("GreenOperators.jl")
-include("Transformations.jl")
-include("ApproximationMethod.jl")
-include("Problem.jl")
-include("Solvers.jl")
-include("ReferenceTensor.jl")
+include("Base/Types.jl")
+include("LinearElasticity/StiffnessParameters.jl")
+include("LinearElasticity/StrainStressDisplacement.jl")
+include("LinearElasticity/StrainStressDisplacementFields.jl")
+include("LinearElasticity/StiffnessTensors.jl")
+include("LinearElasticity/GreenOperators.jl")
+include("Base/Transformations.jl")
+include("Base/ApproximationMethod.jl")
+include("LinearElasticity/Problem.jl")
+include("Base/Solvers.jl")
+include("LinearElasticity/ReferenceTensor.jl")
 
-include("Misc.jl")
-include("Ellipsoids.jl")
-include("Elasticity_Hashin_ellipsoid.jl")
+include("Misc/Misc.jl")
+include("Misc/Ellipsoids.jl")
+include("ExampleGeometries/ElasticityHashinEllipsoid.jl")
 
 end # module
