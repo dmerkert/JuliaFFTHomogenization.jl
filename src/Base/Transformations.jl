@@ -32,6 +32,6 @@ function setAveragingFrequency!{C <: Complex, F}(frequencyField ::
                                                  transformation :: FFT,
                                                  L :: Lattice
                                                 )
-  setZerothFourierCoefficient!(frequencyField.val,L,tensor.val)
+  setZerothFourierCoefficient!(frequencyField.val,L,tensor.val*L.m)
   frequencyField
 end

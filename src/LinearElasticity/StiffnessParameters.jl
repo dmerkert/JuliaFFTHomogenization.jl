@@ -1,9 +1,9 @@
-abstract StiffnessParameter <: Real
+abstract type StiffnessParameter <: Real end
 
 type BulkModulus <: StiffnessParameter
   val :: Float64
   function BulkModulus(val)
-    @argcheck val > 0.0
+#    @argcheck val > 0.0
     new(val)
   end
 end
@@ -11,17 +11,14 @@ BulkModulus() = BulkModulus(1.0)
 
 type YoungsModulus <: StiffnessParameter
   val :: Float64
-  function YoungsModulus(val)
-    new(convert(Float64,val))
-  end
 end
 YoungsModulus() = YoungsModulus(1.0)
 
 type LamesFirstParameter <: StiffnessParameter
   val :: Float64
   function LamesFirstParameter(val)
-    convert(Float64,val) >= 0.0 || warning("Lame's first parameter is usually positive")
-    new(convert(Float64,val))
+#    @argcheck val >= 0.0
+    new(val)
   end
 end
 LamesFirstParameter() = LamesFirstParameter(1.0)
@@ -29,8 +26,8 @@ LamesFirstParameter() = LamesFirstParameter(1.0)
 type ShearModulus <: StiffnessParameter
   val :: Float64
   function ShearModulus(val)
-    @argcheck val >= convert(Float64,val)
-    new(convert(Float64,val))
+#    @argcheck val >= 0.0
+    new(val)
   end
 end
 ShearModulus() = ShearModulus(1.0)
@@ -38,8 +35,9 @@ ShearModulus() = ShearModulus(1.0)
 type PoissonsRatio <: StiffnessParameter
   val :: Float64
   function PoissonsRatio(val)
-    @argcheck -1.0 <= convert(Float64,val) <= 0.5
-    new(convert(Float64,val))
+#    @argcheck -1.0 <= val
+#    @argcheck val <= 0.5
+    new(val)
   end
 end
 PoissonsRatio() = PoissonsRatio(0.25)

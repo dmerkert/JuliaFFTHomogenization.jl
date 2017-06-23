@@ -1,4 +1,4 @@
-abstract StiffnessTensor <: CoefficientTensor
+abstract type StiffnessTensor <: CoefficientTensor end
 
 immutable IsotropicStiffnessTensor <: StiffnessTensor
   lambda :: LamesFirstParameter

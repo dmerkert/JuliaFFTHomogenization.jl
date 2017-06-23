@@ -15,8 +15,8 @@ function mult!{C <: Complex, R <: AbstractFloat}(
     mu = referenceStiffness.mu
     lambda = referenceStiffness.lambda
 
-    factor1 = 1.0/(4.0mu*sumabs2(FourierIndex)) :: R
-    factor2 = (lambda+mu)/((lambda+2.0mu)*mu*sumabs2(FourierIndex)^2) :: R
+    factor1 = 1.0/(4.0mu*sum(abs2,FourierIndex)) :: R
+    factor2 = (lambda+mu)/((lambda+2.0mu)*mu*sum(abs2,FourierIndex)^2) :: R
 
     gamma = zeros((6,6))
 

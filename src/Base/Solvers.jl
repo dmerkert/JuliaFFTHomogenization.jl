@@ -35,6 +35,8 @@ function solve!(problem :: MacroscopicGradientProblem,
           approximationMethod.transformation,
           problem.lattice
          )
+  postprocess!(problem)
+  problem
 end
 
 function _solve!{G <: GradientSolutionTensor,
@@ -55,21 +57,23 @@ function _solve!{G <: GradientSolutionTensor,
                    )
 
   init!(gradient,macroscopicGradient)
-
   referenceTensor = getReferenceTensor(coefficientField,solver)
 
-  mgr = DefaultManager(solver.tol,
-                       solver.maxIter,
-                       solver.verbose,
-                       solver.printSkip)
 
-  istate = DefaultState(gradient)
 
-  iii = managed_iteration(mgr, istate; by=(x,y)->norm(x-y)) do _gradient
-    __gradient = copy(_gradient)
+  gradientPrev = copy(gradient)
+  error = Inf
+  iterationStep = 0
+  timeStart = time()
+  elapedTime = 0
+
+  @printf "%-13s%-15s%-17s\n" "Iteration" "Distance" "Elapsed (seconds)"
+  println(repeat("-", 45))
+
+  while (error > solver.tol) && (iterationStep <= solver.maxIter)
     flux = mult!(flux,
                  coefficientField-referenceTensor,
-                 __gradient
+                 gradient
                 )
     transform!(fluxFourier,
                flux,
@@ -87,14 +91,17 @@ function _solve!{G <: GradientSolutionTensor,
                            transformation,
                            lattice
                           )
-    transformInverse!(__gradient,
+    transformInverse!(gradient,
                       gradientFourier,
                       transformation,
                       lattice
                      )
-    __gradient
-  end
-  @show iii.n
-  @show iii.change
 
+    error = norm(gradient-gradientPrev)/norm(gradient)
+    iterationStep += 1
+    elapsedTime = time() - timeStart
+    @printf "%-13i%-15.5e%-18.5f\n" iterationStep error elapsedTime
+    copy!(gradientPrev,gradient)
+  end
+  gradient
 end

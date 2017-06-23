@@ -22,16 +22,56 @@ type LinearElasticityProblem <: MacroscopicGradientProblem
   end
 end
 
+function copy(P :: LinearElasticityProblem)
+  LinearElasticityProblem(P.lattice,P.stiffness,P.macroscopicStrain)
+end
+
+function postprocess!(P :: LinearElasticityProblem)
+  @argcheck !isnull(P.strain)
+
+  averageStress = Stress()
+  averageStress.val = zeros(6)
+  stressTmp = Stress()
+  strainTmp = Strain()
+  for i in CartesianRange(size(P.stiffness))
+    stressTmp = mult!(stressTmp,P.stiffness[i],get(P.strain)[i])
+    averageStress += stressTmp
+  end
+  averageStress.val = averageStress.val/P.lattice.m
+  P.averageStress = averageStress
+end
+
+function printNumericalError(PAnalytic :: LinearElasticityProblem,
+                             PNumeric  :: LinearElasticityProblem
+                            )
+  @argcheck PAnalytic.lattice.M == PNumeric.lattice.M
+  @argcheck !isnull(PAnalytic.strain)
+  @argcheck !isnull(PAnalytic.averageStress)
+  @argcheck !isnull(PNumeric.strain)
+  @argcheck !isnull(PNumeric.averageStress)
+
+  errorAverageStress =
+  norm(get(PAnalytic.averageStress)-get(PNumeric.averageStress))/
+  norm(get(PAnalytic.averageStress))
+
+  errorL2Strain =
+  norm(get(PAnalytic.strain)-get(PNumeric.strain))/norm(get(PAnalytic.strain))
+
+  print("Error in average stress     : $(errorAverageStress)\n")
+  print("l2-error in strain          : $(errorL2Strain)\n")
+  (errorAverageStress,errorL2Strain)
+end
+
 function initializeProblem!(P :: LinearElasticityProblem)
-  P.strain = StrainField(Float64,P.lattice.size,0.0)
-  P.averageStress = Stress(Float64)
+  P.strain = StrainField{Float64}(P.lattice.size,0.0)
+  P.averageStress = Stress()
   P
 end
 
 function unpackProblem(P :: LinearElasticityProblem)
-  stress = StressField(Float64,get(P.strain).val)
-  strainFourier = StrainField(Complex128,size(get(P.strain)))
-  stressFourier = StressField(Complex128,strainFourier.val)
+  stress = StressField{Float64}(get(P.strain).val)
+  strainFourier = StrainField{Complex128}(size(get(P.strain)))
+  stressFourier = StressField{Complex128}(strainFourier.val)
 
   (get(P.strain),
    stress,

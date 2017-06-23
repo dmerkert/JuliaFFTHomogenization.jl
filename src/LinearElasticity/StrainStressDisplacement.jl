@@ -1,14 +1,13 @@
 type Strain{R <: Number} <: GradientSolutionTensor{R}
   val :: Array{R,1}
 
-  function Strain{R}(val :: Array{R,1})
+  function Strain(val :: Array{R,1}) where {R}
     @argcheck length(val) == 6
-    new(val)
+    new{R}(val)
   end
 end
-Strain{R}(val :: Array{R,1}) = Strain{R}(val)
-Strain(R) =  Strain{R}(Array(R,6))
-Strain() = Strain(Float64)
+Strain{R}() where {R} =  Strain(Array{R}(6))
+Strain() = Strain{Float64}()
 
 function Strain{R <: Number}(val :: Array{R,2})
   @argcheck size(val) == (3,3)
@@ -21,14 +20,13 @@ end
 type Stress{R <: Number} <: FluxSolutionTensor{R}
   val :: Array{R,1}
 
-  function Stress{R}(val :: Array{R,1})
-    @argcheck length(val) == 6
-    new(val)
+  function Stress(v :: Array{R,1}) where {R}
+    @argcheck length(v) == 6
+    new{R}(v)
   end
 end
-Stress{R}(val :: Array{R,1}) = Stress{R}(val)
-Stress(R) = Stress(Array(R,6))
-Stress() = Stress(Float64)
+Stress{R}() where {R} = Stress(Array{R}(6))
+Stress() = Stress{Float64}()
 
 function Stress{R <: Number}(val :: Array{R,2})
   @argcheck size(val) == (3,3)
@@ -40,14 +38,13 @@ end
 type Displacement{R <: Number} <: PrimarySolutionTensor{R}
   val :: Array{R,1}
 
-  function Displacement{R}(val :: Array{R,1})
+  function Displacement(val :: Array{R,1}) where {R}
     @argcheck length(val) == 3
-    new(val)
+    new{R}(val)
   end
 end
-Displacement{R}(val :: Array{R,1}) = Displacement{R}(val)
-Displacement(R) = Displacement{R}(Array(R,3))
-Displacement() = Displacement(Float64)
+Displacement{R}() where {R} = Displacement(Array{R}(3))
+Displacement() = Displacement{Float64}()
 
 for field in [:Strain,:Stress,:Displacement]
   for op in [:+,:-]

@@ -15,7 +15,6 @@ using ArgCheck
 using MPAWL
 import Base.size
 using Polynomials
-using IterationManagers
 
 FFTW.set_num_threads(Sys.CPU_CORES)
 
@@ -58,6 +57,7 @@ export
   StressField,
   DisplacementField,
   init!,
+  average,
   #StiffnessTensors
   StiffnessTensor,
   IsotropicStiffnessTensor,
@@ -74,6 +74,7 @@ export
   #Problem
   LinearElasticityProblem,
   LinearElasticityHomogenizationProblem,
+  printNumericalError,
   #Solvers
   BasicScheme,
   solve!,
