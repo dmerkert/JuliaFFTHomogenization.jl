@@ -27,7 +27,7 @@ using Base.Test
   CTrans = convert(TransversalIsotropicZStiffnessTensor,CIso)
 
   stress  = Stress()
-  strain  = Strain(Float64)
+  strain  = Strain()
 
   strain.val = [1.234234,3.3247293,9.12398217,4.12837192,6.2394732,22.2374834]
 
@@ -40,18 +40,30 @@ end
 
 @testset "Strain and Stress Fields" begin
   strain = Strain()
-  strainF = StrainField(Float64,(2,2,2))
-  stressF = StressField(Float64,(2,2,2))
+  @show "a"
+  strainF = StrainField{Float64}((2,2,2))
+  @show "a"
+  stressF = StressField{Float64}((2,2,2))
+  @show "a"
   I = CartesianIndex((1,1,1))
+  @show "a"
   strainF[1,1,1] = strain
+  @show "a"
   strainF[I] = strain
+  @show "a"
   strain = strainF[1,1,1]
+  @show "a"
   strain = strainF[I]
+  @show "a"
   strainF+strainF
+  @show "a"
   strain.val = [1,2,3,4,5,6]
+  @show "a"
   init!(strainF,strain)
+  @show "a"
 
   b = copy(strainF)
+  @show "a"
 end
 
 @testset "Coefficient Tensor Fields" begin
@@ -63,8 +75,8 @@ end
   CTrans = convert(TransversalIsotropicZStiffnessTensor,CIso)
   CTrans2 = convert(TransversalIsotropicZStiffnessTensor,CIso2)
 
-  CIsoField = CoefficientTensorField(IsotropicStiffnessTensor,(3,3))
-  CTransField = CoefficientTensorField(TransversalIsotropicZStiffnessTensor,(3,3))
+  CIsoField = CoefficientTensorField{IsotropicStiffnessTensor}((3,3))
+  CTransField = CoefficientTensorField{TransversalIsotropicZStiffnessTensor}((3,3))
   for i in 1:3
     for j in 1:3
       if i == j
