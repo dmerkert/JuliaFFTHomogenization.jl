@@ -11,6 +11,7 @@ import Base.convert
 import Base.length
 import Base.copy
 import Base.copy!
+import Base.setindex!
 using ArgCheck
 using MPAWL
 import Base.size

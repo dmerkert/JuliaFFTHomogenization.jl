@@ -24,8 +24,11 @@ for f in [:StrainField,:StressField,:DisplacementField]
     @eval size(field :: ($f)) = size(field.val)[1:(end-1)]
 
     @eval function init!(field :: ($f), tensor)
-        for i in CartesianRange(size(field))
-            field[i] = tensor
+        #for i in CartesianRange(size(field))
+        #    field[i] = tensor
+        #end
+        for i in 1:6
+            field[CartesianRange(size(field)),i] = tensor.val[i]
         end
         field
     end
@@ -56,36 +59,47 @@ function average{R}(field :: StressField{R})
     stress
 end
 
-function Base.setindex!{R}(field::StrainField{R},
-                           tensor::Strain{R},
-                           I::Vararg{Int})
+function setindex!(field::StrainField{R},
+                   tensor::Strain{R},
+                   I::Vararg{Int}) where {R}
     field.val[I...,:] = tensor.val
     field
 end
-Base.setindex!(field :: StrainField,
-               tensor :: Strain,
-               I::CartesianIndex) = (field[I.I...] = tensor)
+
+function setindex!(field :: StrainField{R},
+                   tensor :: Strain{R},
+                   I::CartesianIndex) where {R}
+    field.val[I,:] = tensor.val
+    field
+end
 
 
-function Base.setindex!{R}(field::StressField{R},
-                           tensor::Stress{R},
-                           I::Vararg{Int})
+function setindex!(field::StressField{R},
+                   tensor::Stress{R},
+                   I::Vararg{Int}) where {R}
     field.val[I...,:] = tensor.val
     field
 end
-Base.setindex!(field :: StressField,
-               tensor :: Stress,
-               I::CartesianIndex) = (field[I.I...] = tensor)
 
-function Base.setindex!{R}(field::DisplacementField{R},
+function setindex!(field :: StressField{R},
+                   tensor :: Stress{R},
+                   I::CartesianIndex) where {R}
+    field[I,:] = tensor.val
+    field
+end
+
+function setindex!(field::DisplacementField{R},
                            tensor::Displacement{R},
-                           I::Vararg{Int})
+                           I::Vararg{Int}) where {R}
     field.val[I...,:] = tensor.val
     field
 end
-Base.setindex!(field :: DisplacementField,
-               tensor :: Displacement,
-               I::CartesianIndex) = (field[I.I...] = tensor)
+function setindex!(field :: DisplacementField{R},
+                   tensor :: Displacement{R},
+                   I::CartesianIndex) where {R}
+    field[I,:] = tensor.val
+    field
+end
 
 
 Base.getindex(field::StrainField, I::Vararg{Int}) = Strain(field.val[I...,:])
