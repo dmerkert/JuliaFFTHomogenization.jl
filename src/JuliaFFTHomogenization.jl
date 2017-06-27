@@ -1,4 +1,4 @@
-module JuliaBasicScheme
+module JuliaFFTHomogenization
 
 import Base.*
 import Base./
@@ -11,6 +11,8 @@ import Base.convert
 import Base.length
 import Base.copy
 import Base.copy!
+import Base.setindex!
+import Base.getindex
 using ArgCheck
 using MPAWL
 import Base.size

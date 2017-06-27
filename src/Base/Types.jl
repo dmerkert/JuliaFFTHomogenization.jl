@@ -65,11 +65,11 @@ Base.getindex(field::CoefficientTensorField, I::CartesianIndex) = field[I.I...]
 for op in [:+,:-]
   @eval ($op){R, F}(A :: SolutionTensorField{R,F},
                     B :: SolutionTensorField{R,F}) = 
-  SolutionTensorField{R,F}(($op)(A.val,B.val))
+  SolutionTensorField{R,F}(($op).(A.val,B.val))
 
   @eval ($op){R,S,F}(A :: SolutionTensorField{R,F},
                      B :: SolutionTensorField{S,F}) =
-  SolutionTensorField{promote_type(R,S),F}(($op)(A.val,B.val))
+  SolutionTensorField{promote_type(R,S),F}(($op).(A.val,B.val))
 
   @eval function ($op){T,S}(A :: CoefficientTensorField{T},
                             B :: CoefficientTensorField{S})
