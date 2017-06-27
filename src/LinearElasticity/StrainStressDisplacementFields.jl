@@ -3,34 +3,28 @@ StressField{R} = SolutionTensorField{R,Stress}
 DisplacementField{R} = SolutionTensorField{R,Displacement}
 
 StrainField{R}(dims :: Tuple) where {R} =
-SolutionTensorField{R,Strain}(Array{R}((dims...,6)))
+SolutionTensorField{R,Strain}(Array{R}((6,dims...)))
 
 StrainField{R}(dims :: Tuple,val :: R) where {R} =
-SolutionTensorField{R,Strain}(fill(val,(dims...,6)))
+SolutionTensorField{R,Strain}(fill(val,(6,dims...)))
 
 StressField{R}(dims :: Tuple) where {R} =
-SolutionTensorField{R,Stress}(Array{R}((dims...,6)))
+SolutionTensorField{R,Stress}(Array{R}((6,dims...)))
 
 StressField{R}(dims :: Tuple,val :: R) where {R} =
-SolutionTensorField{R,Stress}(fill(val,(dims...,6)))
+SolutionTensorField{R,Stress}(fill(val,(6,dims...)))
 
 DisplacementField{R}(dims :: Tuple) where {R} =
-SolutionTensorField{R,Displacement}(Array{R}((dims...,3)))
+SolutionTensorField{R,Displacement}(Array{R}((3,dims...)))
 
 DisplacementField{R}(dims :: Tuple,val :: R) where {R} =
-SolutionTensorField{R,Displacement}(fill(val,(dims...,3)))
+SolutionTensorField{R,Displacement}(fill(val,(3,dims...)))
 
 for f in [:StrainField,:StressField,:DisplacementField]
-    @eval size(field :: ($f)) = size(field.val)[1:(end-1)]
+    @eval size(field :: ($f)) = size(field.val)[2:end]
 
     @eval function init!(field :: ($f), tensor)
-        #for i in CartesianRange(size(field))
-        #    field[i] = tensor
-        #end
-        for i in 1:6
-            field[CartesianRange(size(field)),i] = tensor.val[i]
-        end
-        field
+        field.val .= tensor.val
     end
 
     @eval ($f){R}(field :: F) where {R,F <: SolutionTensorField} =
@@ -38,14 +32,7 @@ for f in [:StrainField,:StressField,:DisplacementField]
 end
 
 function average{R}(field :: StrainField{R})
-    strain = Strain{R}()
-    strain.val = zeros(R,6)
-
-    for i in CartesianRange(size(field))
-        strain += field[i]
-    end
-    strain.val = strain.val/prod(size(field))
-    strain
+    Strain(sum(field.val,2:length(size(field.val)))[:]/prod(size(field)))
 end
 
 function average{R}(field :: StressField{R})
@@ -62,50 +49,38 @@ end
 function setindex!(field::StrainField{R},
                    tensor::Strain{R},
                    I::Vararg{Int}) where {R}
-    field.val[I...,:] = tensor.val
+    field.val[:,I...] = tensor.val
     field
 end
-
-function setindex!(field :: StrainField{R},
-                   tensor :: Strain{R},
-                   I::CartesianIndex) where {R}
-    field.val[I,:] = tensor.val
-    field
-end
-
+setindex!(field :: StrainField{R},
+          tensor :: Strain{R},
+          I::CartesianIndex) where {R} = (field[I.I...] = tensor)
 
 function setindex!(field::StressField{R},
-                   tensor::Stress{R},
-                   I::Vararg{Int}) where {R}
-    field.val[I...,:] = tensor.val
+                           tensor::Stress{R},
+                           I::Vararg{Int}) where {R}
+    field.val[:,I...] = tensor.val
     field
 end
-
-function setindex!(field :: StressField{R},
-                   tensor :: Stress{R},
-                   I::CartesianIndex) where {R}
-    field[I,:] = tensor.val
-    field
-end
+setindex!(field :: StressField{R},
+          tensor :: Stress{R},
+          I::CartesianIndex) where {R} = (field[I.I...] = tensor)
 
 function setindex!(field::DisplacementField{R},
-                           tensor::Displacement{R},
-                           I::Vararg{Int}) where {R}
-    field.val[I...,:] = tensor.val
+                   tensor::Displacement{R},
+                   I::Vararg{Int}) where {R}
+    field.val[:,I...] = tensor.val
     field
 end
-function setindex!(field :: DisplacementField{R},
-                   tensor :: Displacement{R},
-                   I::CartesianIndex) where {R}
-    field[I,:] = tensor.val
-    field
-end
+setindex!(field :: DisplacementField{R},
+          tensor :: Displacement{R},
+          I::CartesianIndex) where {R} = (field[I.I...] = tensor)
 
 
-Base.getindex(field::StrainField, I::Vararg{Int}) = Strain(field.val[I...,:])
-Base.getindex(field::StrainField, I::CartesianIndex) = field[I.I...]
-Base.getindex(field::StressField, I::Vararg{Int}) = Stress(field.val[I...,:])
-Base.getindex(field::StressField, I::CartesianIndex) = field[I.I...]
-Base.getindex(field::DisplacementField, I::Vararg{Int}) = Displacement(field.val[I...,:])
-Base.getindex(field::DisplacementField, I::CartesianIndex) = field[I.I...]
+getindex(field::StrainField, I::Vararg{Int}) = Strain(field.val[:,I...])
+getindex(field::StrainField, I::CartesianIndex) = field[I.I...]
+getindex(field::StressField, I::Vararg{Int}) = Stress(field.val[:,I...])
+getindex(field::StressField, I::CartesianIndex) = field[I.I...]
+getindex(field::DisplacementField, I::Vararg{Int}) = Displacement(field.val[:,I...])
+getindex(field::DisplacementField, I::CartesianIndex) = field[I.I...]
 

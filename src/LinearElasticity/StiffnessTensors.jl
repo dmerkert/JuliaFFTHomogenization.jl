@@ -35,10 +35,11 @@ immutable AnisotropicStiffnessTensor <: StiffnessTensor
   end
 end
 
+#TODO: optimize für jeden Typ
 function eig(A :: AnisotropicStiffnessTensor)
   C = A.C
-  C[:,3:6] *= sqrt(2.0)
-  C[3:6,:] *= sqrt(2.0)
+  C[:,3:6] .*= sqrt(2.0)
+  C[3:6,:] .*= sqrt(2.0)
   eigvals(C)
 end
 eig{S <: StiffnessTensor}(A :: S) = eig(convert(AnisotropicStiffnessTensor,A))
