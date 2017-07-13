@@ -1,3 +1,10 @@
+export Strain,
+       Stress,
+       Displacement,
+       fromVoigt!,
+       toVoigt!,
+       transform!
+
 type Strain{R <: Number} <: GradientSolutionTensor{R}
   val :: Array{R,1}
 

@@ -1,3 +1,6 @@
+export Gamma0,
+       mult!
+
 immutable Gamma0 <: GreenOperator end
 
 function mult!{C <: Complex, R <: AbstractFloat}(

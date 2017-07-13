@@ -1,3 +1,11 @@
+export StiffnessParameter,
+       BulkModulus,
+       YoungsModulus,
+       LamesFirstParameter,
+       ShearModulus,
+       PoissonsRatio,
+       convert
+
 abstract type StiffnessParameter <: Real end
 
 type BulkModulus <: StiffnessParameter

@@ -1,3 +1,11 @@
+export StrainField,
+       StressField,
+       DisplacementField,
+       init!,
+       average
+
+
+
 StrainField{R} = SolutionTensorField{R,Strain}
 StressField{R} = SolutionTensorField{R,Stress}
 DisplacementField{R} = SolutionTensorField{R,Displacement}

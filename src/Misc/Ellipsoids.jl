@@ -1,3 +1,5 @@
+export DepolarizationFactors,
+       CartesianToEllipsoidal
 
 #    (d1,d2,d3) = DepolarizationFactors(l1,l2,l3) calculates the depolarization
 # factors for a ellipsoid using the lengths of the semi-axes

@@ -1,3 +1,5 @@
+export RotationMatrixNormal
+
 function RotationMatrixNormal{R <: Real}(
                                          fromNormal :: Array{R,1},
                                          toNormal :: Array{R,1}

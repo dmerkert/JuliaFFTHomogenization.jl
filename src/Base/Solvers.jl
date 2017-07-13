@@ -1,3 +1,6 @@
+export BasicScheme,
+       solve!
+
 immutable BasicScheme <: Solver
   tol       :: Float64
   maxIter   :: Int
@@ -67,8 +70,10 @@ function _solve!{G <: GradientSolutionTensor,
   timeStart = time()
   elapedTime = 0
 
-  @printf "%-13s%-15s%-17s\n" "Iteration" "Distance" "Elapsed (seconds)"
-  println(repeat("-", 45))
+  if solver.verbose
+    @printf "%-13s%-15s%-17s\n" "Iteration" "Distance" "Elapsed (seconds)"
+    println(repeat("-", 45))
+  end
 
   while (error > solver.tol) && (iterationStep <= solver.maxIter)
     flux = mult!(flux,
@@ -100,7 +105,9 @@ function _solve!{G <: GradientSolutionTensor,
     error = norm(gradient-gradientPrev)/norm(gradient)
     iterationStep += 1
     elapsedTime = time() - timeStart
-    @printf "%-13i%-15.5e%-18.5f\n" iterationStep error elapsedTime
+    if solver.verbose
+      @printf "%-13i%-15.5e%-18.5f\n" iterationStep error elapsedTime
+    end
     copy!(gradientPrev,gradient)
   end
   gradient

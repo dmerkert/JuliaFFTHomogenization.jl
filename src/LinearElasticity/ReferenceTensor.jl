@@ -1,3 +1,5 @@
+export getReferenceTensor
+
 function getReferenceTensor(stiffness ::
                             CoefficientTensorField{IsotropicStiffnessTensor},
                             solver :: BasicScheme)

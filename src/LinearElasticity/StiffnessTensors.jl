@@ -1,3 +1,13 @@
+export StiffnessTensor,
+       IsotropicStiffnessTensor,
+       TransversalIsotropicZStiffnessTensor,
+       DiagonalStiffnessTensor,
+       AnisotropicStiffnessTensor,
+       eig,
+       mult!,
+       convert
+
+
 abstract type StiffnessTensor <: CoefficientTensor end
 
 immutable IsotropicStiffnessTensor <: StiffnessTensor

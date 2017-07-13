@@ -1,3 +1,22 @@
+export CoefficientTensor,
+       SolutionTensor,
+       GradientSolutionTensor,
+       FluxSolutionTensor,
+       PrimarySolutionTensor,
+       GreenOperator,
+       Transformation,
+       Solver,
+       Problem,
+       MacroscopicGradientProblem,
+       EffectiveTensorProblem,
+       Pattern,
+       SolutionTensorField,
+       CoefficientTensorField,
+       copy!,
+       copy,
+       norm,
+       mult!
+
 abstract type CoefficientTensor end
 abstract type SolutionTensor{R <: Number} end
 

@@ -20,75 +20,6 @@ using Polynomials
 
 FFTW.set_num_threads(Sys.CPU_CORES)
 
-export
-  #MPAWL
-  Lattice,
-  #Types
-  CoefficientTensor,
-  SolutionTensor,
-  GradientSolutionTensor,
-  FluxSolutionTensor,
-  PrimarySolutionTensor,
-  GreenOperator,
-  Transformation,
-  Solver,
-  Problem,
-  MacroscopicGradientProblem,
-  EffectiveTensorProblem,
-  SolutionTensorField,
-  CoefficientTensorField,
-  size,
-  mult!,
-  Pattern,
-  #StiffnessParameters
-  StiffnessParameter,
-  BulkModulus,
-  YoungsModulus,
-  LamesFirstParameter,
-  ShearModulus,
-  PoissonsRatio,
-  convert,
-  #StrainStressDisplacement
-  Strain,
-  Stress,
-  Displacement,
-  fromVoigt!,
-  toVoigt!,
-  #StrainStressDisplacementFields
-  StrainField,
-  StressField,
-  DisplacementField,
-  init!,
-  average,
-  #StiffnessTensors
-  StiffnessTensor,
-  IsotropicStiffnessTensor,
-  TransversalIsotropicZStiffnessTensor,
-  DiagonalStiffnessTensor,
-  AnisotropicStiffnessTensor,
-  #GreenOperators
-  GreenOperator,
-  Gamma0,
-  #Transformations
-  FFT,
-  #ApproximationMethod
-  ApproximationMethod,
-  #Problem
-  LinearElasticityProblem,
-  LinearElasticityHomogenizationProblem,
-  printNumericalError,
-  #Solvers
-  BasicScheme,
-  solve!,
-  #referenceTensor
-  getReferenceTensor,
-  #ElasticityHashinEllipsoid
-  ElasticityHashinEllipsoid,
-  ElasticityHashinEllipsoidAnalytic
-
-
-
-
 include("Base/Types.jl")
 include("Base/Transformations.jl")
 include("Base/ApproximationMethod.jl")
@@ -106,5 +37,6 @@ include("Misc/Misc.jl")
 include("Misc/Ellipsoids.jl")
 
 include("ExampleGeometries/ElasticityHashinEllipsoid.jl")
+include("ExampleGeometries/Elasticity1DLaminate.jl")
 
 end # module
