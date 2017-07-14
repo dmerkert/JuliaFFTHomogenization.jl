@@ -25,6 +25,7 @@ include("Base/Transformations.jl")
 include("Base/ApproximationMethod.jl")
 include("Base/ConvergenceCriterion.jl")
 include("Base/Solvers.jl")
+include("Base/Solvers/BasicScheme.jl")
 
 include("LinearElasticity/StiffnessParameters.jl")
 include("LinearElasticity/StrainStressDisplacement.jl")
