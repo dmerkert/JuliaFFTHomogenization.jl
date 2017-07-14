@@ -1,4 +1,4 @@
-using JuliaBasicScheme
+using JuliaFFTHomogenization
 using Base.Test
 
 @testset "Types" begin
@@ -40,30 +40,20 @@ end
 
 @testset "Strain and Stress Fields" begin
   strain = Strain()
-  @show "a"
   strainF = StrainField{Float64}((2,2,2))
-  @show "a"
   stressF = StressField{Float64}((2,2,2))
-  @show "a"
   I = CartesianIndex((1,1,1))
-  @show "a"
   strainF[1,1,1] = strain
-  @show "a"
   strainF[I] = strain
-  @show "a"
   strain = strainF[1,1,1]
-  @show "a"
   strain = strainF[I]
-  @show "a"
   strainF+strainF
-  @show "a"
   strain.val = [1,2,3,4,5,6]
-  @show "a"
   init!(strainF,strain)
-  @show "a"
-
   b = copy(strainF)
-  @show "a"
+
+
+  init!(strainF,strain)
 end
 
 @testset "Coefficient Tensor Fields" begin

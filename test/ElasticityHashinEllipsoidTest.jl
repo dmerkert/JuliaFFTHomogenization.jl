@@ -17,7 +17,27 @@ using MPAWL
   problemNumeric = copy(problem)
 
   approximationMethod = ApproximationMethod(FFTTransformation(),Gamma0())
-  solver = BasicScheme(;printSkip=1,verbose=false,maxIter=200)
+  solver =
+  BasicScheme(;printSkip=1,verbose=false,maxIter=200,convergenceCriterion=CauchyConvergenceCriterion())
+  solve!(problemNumeric,approximationMethod,solver)
+  @test isapprox(
+                 average(get(problemNumeric.strain)).val,
+                 problemNumeric.macroscopicStrain.val,
+                 rtol=1e-12
+                )
+  @test isapprox(
+                 get(problem.strain).val,
+                 get(problemNumeric.strain).val,
+                 rtol=1e-1
+                )
+
+  @test isapprox(
+                 get(problem.averageStress).val,
+                 get(problemNumeric.averageStress).val,
+                 rtol=1e-2
+                )
+
+  BasicScheme(;printSkip=1,verbose=false,maxIter=200,convergenceCriterion=NormConvergenceCriterion())
   solve!(problemNumeric,approximationMethod,solver)
   @test isapprox(
                  average(get(problemNumeric.strain)).val,
