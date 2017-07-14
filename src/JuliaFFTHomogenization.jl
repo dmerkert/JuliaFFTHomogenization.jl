@@ -23,6 +23,7 @@ FFTW.set_num_threads(Sys.CPU_CORES)
 include("Base/Types.jl")
 include("Base/Transformations.jl")
 include("Base/ApproximationMethod.jl")
+include("Base/ConvergenceCriterion.jl")
 include("Base/Solvers.jl")
 
 include("LinearElasticity/StiffnessParameters.jl")

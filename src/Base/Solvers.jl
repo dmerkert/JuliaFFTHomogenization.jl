@@ -6,13 +6,15 @@ immutable BasicScheme <: Solver
   maxIter   :: Int
   verbose   :: Bool
   printSkip :: Int
+  convergenceCriterion :: ConvergenceCriterion
 
   BasicScheme(;
                tol=1e-6,
                maxIter=100,
                verbose=false,
-               printSkip=50
-              ) = new(tol,maxIter,verbose,printSkip)
+               printSkip=50,
+               convergenceCriterion = CauchyConvergenceCriterion()
+              ) = new(tol,maxIter,verbose,printSkip,convergenceCriterion)
 end
 
 function solve!(problem :: EffectiveTensorProblem,
@@ -57,14 +59,14 @@ function _solve!{G <: GradientSolutionTensor,
                   gamma               :: GreenOperator,
                   transformation      :: Transformation,
                   lattice             :: Lattice
-                   )
+                 )
 
   init!(gradient,macroscopicGradient)
   referenceTensor = getReferenceTensor(coefficientField,solver)
 
 
+  init!(solver.convergenceCriterion,gradient)
 
-  gradientPrev = copy(gradient)
   error = Inf
   iterationStep = 0
   timeStart = time()
@@ -102,13 +104,13 @@ function _solve!{G <: GradientSolutionTensor,
                       lattice
                      )
 
-    error = norm(gradient-gradientPrev)/norm(gradient)
+    error = computeError(solver.convergenceCriterion,gradient)
     iterationStep += 1
     elapsedTime = time() - timeStart
     if solver.verbose
       @printf "%-13i%-15.5e%-18.5f\n" iterationStep error elapsedTime
     end
-    copy!(gradientPrev,gradient)
+    set!(solver.convergenceCriterion,gradient)
   end
   gradient
 end
