@@ -132,7 +132,6 @@ function mult!(c :: SolutionTensorField,
 
   for i in getFrequencyIterator(L)
     frequency = getFrequencyPoint(L,i)
-    mult!(c[i],G,b[i],referenceCoefficient,2.0pi*frequency)
     c[i] = mult!(c[i],G,b[i],referenceCoefficient,2.0pi*frequency)
   end
   c

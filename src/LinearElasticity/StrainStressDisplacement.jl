@@ -67,8 +67,10 @@ function Base.getindex(strain::Strain, i::Int)
 end
 
 function Base.getindex(strain::Strain, I::Vararg{Int, 2})
-  @argcheck 1 <= I[1] <= 3
-  @argcheck 1 <= I[2] <= 3
+  @argcheck 1 <= I[1]
+  @argcheck I[1] <= 3
+  @argcheck 1 <= I[2]
+  @argcheck I[2] <= 3
   I[1] == I[2] && return strain[I[1]]
   I[1] == 1 && I[2] == 2 && return 0.5strain[6]
   I[1] == 1 && I[2] == 3 && return 0.5strain[5]
@@ -84,8 +86,10 @@ function Base.setindex!{R}(strain::Strain{R}, v::R, i::Int)
 end
 
 function Base.setindex!{R}(strain::Strain{R}, v::R, I::Vararg{Int, 2})
-  @argcheck 1 <= I[1] <= 3
-  @argcheck 1 <= I[2] <= 3
+  @argcheck 1 <= I[1]
+  @argcheck I[1] <= 3
+  @argcheck 1 <= I[2]
+  @argcheck I[2] <= 3
   I[1] == I[2] && (strain[I[1]] = v)
   I[1] == 1 && I[2] == 2 && (strain[6] = 2.0v)
   I[1] == 1 && I[2] == 3 && (strain[5] = 2.0v)
@@ -101,8 +105,10 @@ function Base.getindex(stress::Stress, i::Int)
 end
 
 function Base.getindex(stress::Stress, I::Vararg{Int, 2})
-  @argcheck 1 <= I[1] <= 3
-  @argcheck 1 <= I[2] <= 3
+  @argcheck 1 <= I[1]
+  @argcheck I[1] <= 3
+  @argcheck 1 <= I[2]
+  @argcheck I[2] <= 3
   I[1] == I[2] && return stress[I[1]]
   I[1] == 1 && I[2] == 2 && return stress[6]
   I[1] == 1 && I[2] == 3 && return stress[5]
@@ -118,8 +124,10 @@ function Base.setindex!{R}(stress::Stress{R}, v::R, i::Int)
 end
 
 function Base.setindex!{R}(stress::Stress{R}, v::R, I::Vararg{Int, 2})
-  @argcheck 1 <= I[1] <= 3
-  @argcheck 1 <= I[2] <= 3
+  @argcheck 1 <= I[1]
+  @argcheck I[1] <= 3
+  @argcheck 1 <= I[2]
+  @argcheck I[2] <= 3
   I[1] == I[2] && (stress[I[1]] = v)
   I[1] == 1 && I[2] == 2 && (stress[6] = v)
   I[1] == 1 && I[2] == 3 && (stress[5] = v)

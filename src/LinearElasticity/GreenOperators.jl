@@ -3,23 +3,27 @@ export Gamma0,
 
 immutable Gamma0 <: GreenOperator end
 
-function mult!{C <: Complex, R <: AbstractFloat}(
-                             strain :: Strain{C},
-                             gamma :: Gamma0,
-                             stress :: Stress{C},
-                             referenceStiffness :: IsotropicStiffnessTensor,
-                             FourierIndex :: Array{R,1}
-                            )
+function mult!{
+               C <: Complex,
+               IR <: Union{Integer, AbstractFloat}
+              }(
+                strain :: Strain{C},
+                _gamma :: Gamma0,
+                stress :: Stress{C},
+                referenceStiffness :: IsotropicStiffnessTensor,
+                FourierIndex :: Array{IR,1}
+               )
 
-  if norm(FourierIndex) == 0.0
+  if norm(FourierIndex) == 0
     strain.val = zeros(strain.val)
   else
 
     mu = referenceStiffness.mu
     lambda = referenceStiffness.lambda
 
-    factor1 = 1.0/(4.0mu*sum(abs2,FourierIndex)) :: R
-    factor2 = (lambda+mu)/((lambda+2.0mu)*mu*sum(abs2,FourierIndex)^2) :: R
+    factor1 = 1.0/(4.0mu*sum(abs2,FourierIndex)) :: Float64
+    factor2 = (lambda+mu)/((lambda+2.0mu)*mu*sum(abs2,FourierIndex)^2) ::
+    Float64
 
     gamma = zeros((6,6))
 
@@ -74,7 +78,18 @@ function mult!{C <: Complex, R <: AbstractFloat}(
   strain
 end
 
-@inline function _evalGamma0HatElasticity(factor1,factor2,FourierIndex,i,j,k,h)
+@inline function _evalGamma0HatElasticity{R <: AbstractFloat,
+                                          I <: Integer,
+                                          IR <: Union{Integer, AbstractFloat}
+                                         }(
+                                          factor1 :: R,
+                                          factor2 :: R,
+                                          FourierIndex :: Array{IR,1},
+                                          i :: I,
+                                          j :: I,
+                                          k :: I,
+                                          h :: I
+                                         ) :: R
   -(
     factor1*(
              (k==i)*FourierIndex[h]*FourierIndex[j] +
@@ -87,5 +102,5 @@ end
                          FourierIndex[k]*
                          FourierIndex[h]
                         )
-   )
+   ) :: R
 end
