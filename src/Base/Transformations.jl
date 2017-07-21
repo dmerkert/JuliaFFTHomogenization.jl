@@ -19,7 +19,7 @@ function transform!(
                            }
 
   frequencyField.val =
-  patternfft(pointField.val,L,LastDimensionsFFT)
+  patternfft(pointField.val,L,[2:(L.rank+1)...])
   frequencyField
 end
 
@@ -36,7 +36,7 @@ function transformInverse!(
                                    N
                                   }
 
-  pointField.val = patternifft(frequencyField.val,L,LastDimensionsFFT)
+  pointField.val = patternifft(frequencyField.val,L,[2:(L.rank+1)...])
   pointField
 end
 
@@ -48,6 +48,6 @@ function setAveragingFrequency!{C <: Complex, F}(frequencyField ::
                                                  L :: Lattice
                                                 )
 # TODO: Update this function call to not read Zeorth anymore? Also: How large is the zeroth-vectro here?
-  setZerothFourierCoefficient!(frequencyField.val,L,tensor.val*L.m,LastDimensionsFFT)
+  setFourierCoefficient!(frequencyField.val,L,tensor.val*L.m,ones(Int, L.rank),[2:(L.rank+1)...])
   frequencyField
 end
