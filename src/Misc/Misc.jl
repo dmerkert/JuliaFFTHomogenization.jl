@@ -1,9 +1,9 @@
 export RotationMatrixNormal
 
-function RotationMatrixNormal{R <: Real}(
-                                         fromNormal :: Array{R,1},
-                                         toNormal :: Array{R,1}
-                                        )
+function RotationMatrixNormal(
+                              fromNormal :: Array{R,1},
+                              toNormal :: Array{R,1}
+                             ) where {R <: Real}
 
   @argcheck length(fromNormal) == 3
   @argcheck length(toNormal) == 3
@@ -18,5 +18,5 @@ function RotationMatrixNormal{R <: Real}(
   c  = dot(fromNormal,toNormal)
   vX = [0 -v[3] v[2];v[3] 0 -v[1];-v[2] v[1] 0]
 
-  eye(3) + vX + vX^2*(1.0-c)/(s^2)
+  (eye(3) + vX + vX^2*(1.0-c)/(s^2)) :: Array{R,2}
 end

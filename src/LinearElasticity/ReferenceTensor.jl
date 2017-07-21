@@ -1,8 +1,11 @@
 export getReferenceTensor
 
-function getReferenceTensor(stiffness ::
-                            CoefficientTensorField{IsotropicStiffnessTensor},
-                            solver :: BasicScheme)
+function getReferenceTensor(
+                            stiffness ::
+                            CoefficientTensorField{T,N},
+                            solver :: BasicScheme
+                           ) where {T <: IsotropicStiffnessTensor,N}
+
   (minMu ,maxMu ,minLambda ,maxLambda) = 
   _getReferenceTensorMinMax!(
                              stiffness,
@@ -13,11 +16,13 @@ function getReferenceTensor(stiffness ::
   IsotropicStiffnessTensor(0.5(minLambda+maxLambda), 0.5(minMu+maxMu))
 end
 
-function _getReferenceTensorMinMax!(stiffness ::
-                                    CoefficientTensorField{IsotropicStiffnessTensor},
+function _getReferenceTensorMinMax!(
+                                    stiffness ::
+                                    CoefficientTensorField{T,N},
                                     solver :: BasicScheme,
-                                    R :: CartesianRange
-                                   )
+                                    R :: CartesianRange{CartesianIndex{N}}
+                                   ) where {T <: IsotropicStiffnessTensor,N}
+
   minMu = typemax(Float64)
   maxMu = typemin(Float64)
   minLambda = typemax(Float64)
@@ -31,9 +36,10 @@ function _getReferenceTensorMinMax!(stiffness ::
   (minMu,maxMu,minLambda,maxLambda)
 end
 
-function getReferenceTensor{S <: StiffnessTensor}(stiffness ::
-                                                  CoefficientTensorField{S},
-                                                  solver :: BasicScheme)
+function getReferenceTensor(
+                            stiffness :: CoefficientTensorField{S,N},
+                            solver :: BasicScheme
+                           ) where {S <: StiffnessTensor, N}
 
   (minOfMinEig,maxOfMinEig,minOfMaxEig,maxOfMaxEig) =
   _eigBounds(stiffness,
@@ -47,10 +53,11 @@ function getReferenceTensor{S <: StiffnessTensor}(stiffness ::
   IsotropicStiffnessTensor(lambda,mu)
 end
 
-function _eigBounds{S <: StiffnessTensor}(stiffness ::
-                                          CoefficientTensorField{S},
-                                          R :: CartesianRange
-                                         )
+function _eigBounds(
+                    stiffness :: CoefficientTensorField{S,N},
+                    R :: CartesianRange{CartesianIndex{N}}
+                   ) where {S <: StiffnessTensor, N}
+
   minOfMinEig = typemax(Float64)
   maxOfMinEig = typemin(Float64)
   minOfMaxEig = typemax(Float64)

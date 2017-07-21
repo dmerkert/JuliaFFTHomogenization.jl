@@ -3,16 +3,16 @@ export Gamma0,
 
 immutable Gamma0 <: GreenOperator end
 
-function mult!{
-               C <: Complex,
-               IR <: Union{Integer, AbstractFloat}
-              }(
-                strain :: Strain{C},
-                _gamma :: Gamma0,
-                stress :: Stress{C},
-                referenceStiffness :: IsotropicStiffnessTensor,
-                FourierIndex :: Array{IR,1}
-               )
+function mult!(
+               strain :: Strain{C},
+               _gamma :: Gamma0,
+               stress :: Stress{C},
+               referenceStiffness :: IsotropicStiffnessTensor,
+               FourierIndex :: Array{IR,1}
+              ) where {
+                       C <: Complex,
+                       IR <: Union{Integer, AbstractFloat}
+                      }
 
   if norm(FourierIndex) == 0
     strain.val = zeros(strain.val)
@@ -78,10 +78,7 @@ function mult!{
   strain
 end
 
-@inline function _evalGamma0HatElasticity{R <: AbstractFloat,
-                                          I <: Integer,
-                                          IR <: Union{Integer, AbstractFloat}
-                                         }(
+@inline function _evalGamma0HatElasticity(
                                           factor1 :: R,
                                           factor2 :: R,
                                           FourierIndex :: Array{IR,1},
@@ -89,7 +86,11 @@ end
                                           j :: I,
                                           k :: I,
                                           h :: I
-                                         ) :: R
+                                         ) :: R where {
+                                                  R <: AbstractFloat,
+                                                  I <: Integer,
+                                                  IR <: Union{Integer, AbstractFloat}
+                                                 }
   -(
     factor1*(
              (k==i)*FourierIndex[h]*FourierIndex[j] +

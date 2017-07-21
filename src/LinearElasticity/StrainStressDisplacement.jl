@@ -138,8 +138,8 @@ function Base.setindex!{R}(stress::Stress{R}, v::R, I::Vararg{Int, 2})
   stress
 end
 
-function Base.getindex(dispacement :: Displacement, i::Int)
-  Displacement.val[i]
+function Base.getindex(displacement :: Displacement, i::Int)
+  displacement.val[i]
 end
 
 function Base.setindex!{R}(displacement :: Displacement{R}, v::R, i::Int)

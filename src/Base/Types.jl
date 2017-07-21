@@ -33,37 +33,49 @@ abstract type EffectiveTensorProblem <: Problem end
 
 abstract type Pattern end
 
-type SolutionTensorField{R <: Number, F <: SolutionTensor}
-  val :: Array{R}
+type SolutionTensorField{R <: Number, F <: SolutionTensor, N}
+  val :: Array{R,N}
 
-  SolutionTensorField{R,F}(val :: Array{R}) where {R,F} = new{R,F}(val)
+  function SolutionTensorField{R,F}(val :: Array{R,N}) where {R,F,N} 
+    new{R,F,N}(val)
+  end
 end
 
-function copy!{R,F}(dest :: SolutionTensorField{R,F},
-                    source :: SolutionTensorField{R,F})
+function copy!(
+               dest :: SolutionTensorField{R,F,N},
+               source :: SolutionTensorField{R,F,N}
+              ) where {R,F,N}
   copy!(dest.val,source.val)
   dest
 end
 
-function copy{R,F}(source :: SolutionTensorField{R,F})
+function copy(
+              source :: SolutionTensorField{R,F,N}
+             ) where {R,F,N}
   dest = SolutionTensorField{R,F}(similar(source.val))
   copy!(dest,source)
 end
 
-function norm(S :: SolutionTensorField)
+function norm(S :: SolutionTensorField{R,F,N}) where {R,F,N}
   norm(S.val[:])
 end
 
-function norm(S :: SolutionTensor)
+function norm(S :: SolutionTensor{R}) where {R}
   norm(S.val[:])
 end
 
+function init!(field :: SolutionTensorField{R,F,N}, tensor :: F) where {N,F,R}
+  field.val .= tensor.val
+end
 
-type CoefficientTensorField{T <: CoefficientTensor}
-  val :: Array{T}
 
-  CoefficientTensorField{T}(dims :: Tuple) where {T} = new{T}(Array{T}(dims))
-  CoefficientTensorField{T}(val :: Array{T}) where {T} = new{T}(val)
+
+type CoefficientTensorField{T <: CoefficientTensor,N}
+  val :: Array{T,N}
+
+  CoefficientTensorField{T}(dims :: NTuple{N,Int}) where {T,N} =
+  new{T,N}(Array{T,N}(dims))
+  CoefficientTensorField(val :: Array{T,N}) where {T,N} = new{T,N}(val)
 end
 
 size(A :: CoefficientTensorField) = size(A.val)
@@ -82,16 +94,22 @@ Base.getindex(field::CoefficientTensorField, I::Vararg{Int}) = field.val[I...]
 Base.getindex(field::CoefficientTensorField, I::CartesianIndex) = field[I.I...]
 
 for op in [:+,:-]
-  @eval ($op){R, F}(A :: SolutionTensorField{R,F},
-                    B :: SolutionTensorField{R,F}) = 
+  @eval ($op)(
+              A :: SolutionTensorField{R,F,N},
+              B :: SolutionTensorField{R,F,N}
+             ) where {R,F,N} =
   SolutionTensorField{R,F}(($op).(A.val,B.val))
 
-  @eval ($op){R,S,F}(A :: SolutionTensorField{R,F},
-                     B :: SolutionTensorField{S,F}) =
+  @eval ($op)(
+              A :: SolutionTensorField{R,F,N},
+              B :: SolutionTensorField{S,F,N}
+             ) where {R,S,F,N} =
   SolutionTensorField{promote_type(R,S),F}(($op).(A.val,B.val))
 
-  @eval function ($op){T,S}(A :: CoefficientTensorField{T},
-                            B :: CoefficientTensorField{S})
+  @eval function ($op)(
+                       A :: CoefficientTensorField{T,N},
+                       B :: CoefficientTensorField{S,N}
+                      ) where {T,S,N}
     @argcheck size(A) == size(B)
     C = CoefficientTensorField{promote_type(T,S)}(size(A))
     for i in CartesianRange(size(A))
@@ -100,8 +118,10 @@ for op in [:+,:-]
     C
   end
 
-  @eval function ($op){T,S <: CoefficientTensor}(A :: CoefficientTensorField{T},
-                                                 B :: S)
+  @eval function ($op)(
+                       A :: CoefficientTensorField{T,N},
+                       B :: S
+                      ) where {T,S <: CoefficientTensor,N}
     C = CoefficientTensorField{promote_type(T,S)}(size(A))
     for i in CartesianRange(size(A))
       C[i] = ($op)(A[i],B)
@@ -110,9 +130,11 @@ for op in [:+,:-]
   end
 end
 
-function mult!(c :: SolutionTensorField,
-               A :: CoefficientTensorField,
-               b :: SolutionTensorField)
+function mult!(
+               c :: SolutionTensorField{R,F1,M},
+               A :: CoefficientTensorField{T,N},
+               b :: SolutionTensorField{R,F2,M}
+              ) where {R,F1,F2,T,N,M}
   @argcheck size(A) == size(b)
   @argcheck size(b) == size(c)
 
@@ -122,12 +144,12 @@ function mult!(c :: SolutionTensorField,
   c
 end
 
-function mult!(c :: SolutionTensorField,
+function mult!(c :: SolutionTensorField{R,F1,M},
                G :: GreenOperator,
-               b :: SolutionTensorField,
-               referenceCoefficient :: CoefficientTensor,
+               b :: SolutionTensorField{R,F2,M},
+               referenceCoefficient :: C,
                L :: Lattice
-  )
+              ) where {R,F1,F2,M,C<:CoefficientTensor}
   @argcheck size(b) == size(c)
 
   for i in getFrequencyIterator(L)

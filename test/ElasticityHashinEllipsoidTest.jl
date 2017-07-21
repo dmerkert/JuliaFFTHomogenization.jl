@@ -18,7 +18,7 @@ using MPAWL
 
   approximationMethod = ApproximationMethod(FFTTransformation(),Gamma0())
   solver =
-  BasicScheme(;printSkip=1,verbose=false,maxIter=200,convergenceCriterion=CauchyConvergenceCriterion())
+  BasicScheme(;printSkip=1,verbose=true,maxIter=200,convergenceCriterion=CauchyConvergenceCriterion())
   solve!(problemNumeric,approximationMethod,solver)
   @test isapprox(
                  average(get(problemNumeric.strain)).val,

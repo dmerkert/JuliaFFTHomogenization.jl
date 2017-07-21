@@ -1,7 +1,7 @@
 using JuliaFFTHomogenization
 using Base.Test
 
-@testset "Strain and Stress" begin
+@testset "StrainStressDisplacement" begin
   strain = Strain()
   for i in 1:6
     strain.val[i] = 1.0i
@@ -70,4 +70,20 @@ using Base.Test
       i == 3 && j == 2 && @test stress.val[4] == r
     end
   end
+
+  Displacement()
+  d = Displacement([3.0;4.0;5.0])
+
+  @test d[1] == 3.0
+  @test d[2] == 4.0
+  @test d[3] == 5.0
+
+  d[1] = 3.0
+  d[2] = 3.0
+  d[3] = 3.0
+
+  Strain() + Strain()
+  Stress() + Stress()
+  Displacement() + Displacement()
+
 end
