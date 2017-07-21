@@ -15,7 +15,7 @@ function transform!{C <: Complex,
                       )
 
   frequencyField.val =
-  FFT!(frequencyField.val,pointField.val,L,LastDimensionsFFT)
+  patternfft(pointField.val,L,LastDimensionsFFT)
   frequencyField
 end
 
@@ -28,7 +28,7 @@ function transformInverse!{C <: Complex,
                               L :: Lattice
                              )
 
-  pointField.val = IFFT!(pointField.val,frequencyField.val,L,LastDimensionsFFT)
+  pointField.val = patternifft(frequencyField.val,L,LastDimensionsFFT)
   pointField
 end
 
@@ -39,6 +39,7 @@ function setAveragingFrequency!{C <: Complex, F}(frequencyField ::
                                                  FFTTransformation,
                                                  L :: Lattice
                                                 )
+# TODO: Update this function call to not read Zeorth anymore? Also: How large is the zeroth-vectro here?
   setZerothFourierCoefficient!(frequencyField.val,L,tensor.val*L.m,LastDimensionsFFT)
   frequencyField
 end
