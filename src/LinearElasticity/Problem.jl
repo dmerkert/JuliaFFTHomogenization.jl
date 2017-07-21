@@ -7,41 +7,50 @@ export LinearElasticityProblem,
        LinearElasticityHomogenizationProblem
 
 
-type LinearElasticityProblem <: MacroscopicGradientProblem
-  lattice :: Lattice
-  stiffness :: CoefficientTensorField
-  macroscopicStrain :: Strain
-  strain :: Nullable{StrainField{Float64}}
-  averageStress :: Nullable{Stress}
+type LinearElasticityProblem{N,T,M,R} <: MacroscopicGradientProblem
+ lattice :: Lattice
+ stiffness :: CoefficientTensorField{T,N}
+ macroscopicStrain :: Strain{R}
+ strain :: Nullable{StrainField{R,M}}
+ averageStress :: Nullable{Stress}
 
-  function LinearElasticityProblem{S <: StiffnessTensor}(
-                                                         lattice, stiffness ::
-                                                         CoefficientTensorField{S},
-                                                         macroscopicStrain
-                                                        )
+ function LinearElasticityProblem(
+                                  lattice :: Lattice,
+                                  stiffness :: CoefficientTensorField{T,N},
+                                  macroscopicStrain :: Strain{R}
+                                 ) where {
+                                          T <: StiffnessTensor,
+                                          N,
+                                          R
+                                         }
     @argcheck size(stiffness) == lattice.size
     @argcheck norm(macroscopicStrain.val) != 0.0
 
-    new(lattice,
-        stiffness,
-        macroscopicStrain,
-        Nullable{StrainField{Float64}}(),
-        Nullable{Stress}()
-       )
+    new{N,T,N+1,R}(
+                   lattice,
+                   stiffness,
+                   macroscopicStrain,
+                   Nullable{StrainField{R,N+1}}(),
+                   Nullable{Stress}()
+                  )
   end
 end
 
-function copy(P :: LinearElasticityProblem)
+function copy(
+              P :: LinearElasticityProblem{N,T,M,R}
+             ) where {N,T,M,R}
   LinearElasticityProblem(P.lattice,P.stiffness,P.macroscopicStrain)
 end
 
-function postprocess!(P :: LinearElasticityProblem)
+function postprocess!(
+                      P :: LinearElasticityProblem{N,T,M,R}
+                     ) where {N,T,M,R}
   @argcheck !isnull(P.strain)
 
-  averageStress = Stress()
-  averageStress.val = zeros(6)
-  stressTmp = Stress()
-  strainTmp = Strain()
+  averageStress = Stress{R}()
+  averageStress.val = zeros(R,6)
+  stressTmp = Stress{R}()
+  strainTmp = Strain{R}()
   for i in CartesianRange(size(P.stiffness))
     stressTmp = mult!(stressTmp,P.stiffness[i],get(P.strain)[i])
     averageStress += stressTmp
@@ -50,9 +59,10 @@ function postprocess!(P :: LinearElasticityProblem)
   P.averageStress = averageStress
 end
 
-function printNumericalError(PAnalytic :: LinearElasticityProblem,
-                             PNumeric  :: LinearElasticityProblem
-                            )
+function printNumericalError(
+                             PAnalytic :: LinearElasticityProblem{N,T,M,R},
+                             PNumeric  :: LinearElasticityProblem{N,T,M,R}
+                            ) where {N,T,M,R}
   @argcheck PAnalytic.lattice.M == PNumeric.lattice.M
   @argcheck !isnull(PAnalytic.strain)
   @argcheck !isnull(PAnalytic.averageStress)
@@ -71,14 +81,18 @@ function printNumericalError(PAnalytic :: LinearElasticityProblem,
   (errorAverageStress,errorL2Strain)
 end
 
-function initializeProblem!(P :: LinearElasticityProblem)
-  P.strain = StrainField{Float64}(P.lattice.size,0.0)
-  P.averageStress = Stress()
+function initializeProblem!(
+                            P :: LinearElasticityProblem{N,T,M,R}
+                           ) where {N,T,M,R}
+  P.strain = StrainField{R}(P.lattice.size,0.0)
+  P.averageStress = Stress{R}()
   P
 end
 
-function unpackProblem(P :: LinearElasticityProblem)
-  stress = StressField{Float64}(get(P.strain).val)
+function unpackProblem(
+                       P :: LinearElasticityProblem{N,T,M,R}
+                      ) where {N,T,M,R}
+  stress = StressField{R}(get(P.strain).val)
   strainFourier = StrainField{Complex128}(size(get(P.strain)))
   stressFourier = StressField{Complex128}(strainFourier.val)
 
@@ -90,70 +104,83 @@ function unpackProblem(P :: LinearElasticityProblem)
    P.macroscopicStrain)
 end
 
-type LinearElasticityHomogenizationProblem <: EffectiveTensorProblem
+type LinearElasticityHomogenizationProblem{T,N} <: EffectiveTensorProblem
   lattice :: Lattice
-  stiffness :: CoefficientTensorField
+  stiffness :: CoefficientTensorField{T,N}
   effectiveStiffness :: Nullable{AnisotropicStiffnessTensor}
 
-  function LinearElasticityHomogenizationProblem{S <: StiffnessTensor}(lattice,
-                                                                       stiffness
-                                                                       ::
-                                                                       CoefficientTensorField{S}
-                                                                      )
+  function LinearElasticityHomogenizationProblem(
+                                                 lattice :: Lattice,
+                                                 stiffness ::
+                                                 CoefficientTensorField{T,N}
+                                                ) where {T,N}
     @argcheck size(stiffness) == lattice.size
 
-    new(lattice,
+    new{T,N}(lattice,
         stiffness,
         Nullable{AnisotropicStiffnessTensor}()
        )
   end
 end
 
-type LinearElasticityHomogenizationProblemWithFields <: EffectiveTensorProblem
+type LinearElasticityHomogenizationProblemWithFields{N,T,M} <: EffectiveTensorProblem
   lattice :: Lattice
-  stiffness :: CoefficientTensorField
+  stiffness :: CoefficientTensorField{T,N}
   effectiveStiffness :: Nullable{AnisotropicStiffnessTensor}
-  strain :: Array{Nullable{StrainField{Float64}},1}
+  strain :: Array{Nullable{StrainField{Float64,M}},1}
 
 
-  function LinearElasticityHomogenizationProblemWithFields{S <: StiffnessTensor}(lattice,
-                                                                       stiffness
-                                                                       ::
-                                                                       CoefficientTensorField{S}
-                                                                      )
+  function LinearElasticityHomogenizationProblemWithFields(
+                                                           lattice :: Lattice,
+                                                           stiffness
+                                                           ::
+                                                           CoefficientTensorField{T,N}
+                                                          ) where {T,N}
     @argcheck size(stiffness) == lattice.size
 
-    new(lattice,
+    new{N,T,N+1}(lattice,
         stiffness,
         Nullable{AnisotropicStiffnessTensor}(),
-        Array{Nullable{StrainField{Float64}}}(6)
+        Array{Nullable{StrainField{Float64,N+1}}}(6)
        )
   end
 end
 
 
-function copy(P :: LinearElasticityHomogenizationProblem)
+function copy(
+              P :: LinearElasticityHomogenizationProblem{T,N}
+             ) where {T,N}
   LinearElasticityHomogenizationProblem(P.lattice,P.stiffness)
 end
 
-function copy(P :: LinearElasticityHomogenizationProblemWithFields)
+function copy(
+              P :: LinearElasticityHomogenizationProblemWithFields{T,N}
+             ) where {T,N}
   LinearElasticityHomogenizationProblemWithFields(P.lattice,P.stiffness)
 end
 
-function initializeProblem!(P :: LinearElasticityHomogenizationProblem)
+function initializeProblem!(
+                            P :: LinearElasticityHomogenizationProblem{T,N}
+                           ) where {T,N}
   P.effectiveStiffness = AnisotropicStiffnessTensor(zeros(Float64,6,6))
   P
 end
 
-function initializeProblem!(P :: LinearElasticityHomogenizationProblemWithFields)
+function initializeProblem!(
+                            P ::
+                            LinearElasticityHomogenizationProblemWithFields{T,N}
+                           ) where {T,N}
   P.effectiveStiffness = AnisotropicStiffnessTensor(zeros(Float64,6,6))
   P
 end
 
-length(P :: LinearElasticityHomogenizationProblem) = 6
-length(P :: LinearElasticityHomogenizationProblemWithFields) = 6
+length(P :: LinearElasticityHomogenizationProblem{T,N}) where {T,N} = 6
+length(P :: LinearElasticityHomogenizationProblemWithFields{T,N}) where {T,N} = 6
 
-function Base.getindex(P :: LinearElasticityHomogenizationProblem, i :: Int)
+function Base.getindex(
+                       P :: LinearElasticityHomogenizationProblem{T,N},
+                       i :: Int
+                      ) where {T,N}
   @argcheck 1 <= i
   @argcheck i <= 6
   vector = zeros(Float64,6)
@@ -165,7 +192,10 @@ function Base.getindex(P :: LinearElasticityHomogenizationProblem, i :: Int)
                          )
 end
 
-function Base.getindex(P :: LinearElasticityHomogenizationProblemWithFields, i :: Int)
+function Base.getindex(
+                       P :: LinearElasticityHomogenizationProblemWithFields{T,N}
+                       , i :: Int
+                      ) where {T,N}
   @argcheck 1 <= i
   @argcheck i <= 6
   vector = zeros(Float64,6)
@@ -177,9 +207,11 @@ function Base.getindex(P :: LinearElasticityHomogenizationProblemWithFields, i :
                          )
 end
 
-function Base.setindex!(P :: LinearElasticityHomogenizationProblem,
-                        S :: LinearElasticityProblem,
-                        i :: Int)
+function Base.setindex!(
+                        P :: LinearElasticityHomogenizationProblem{T,N},
+                        S :: LinearElasticityProblem{T,N},
+                        i :: Int
+                       ) where {T,N}
   @argcheck 1 <= i
   @argcheck i <= 6
   if isnull(P.effectiveStiffness)
@@ -189,9 +221,12 @@ function Base.setindex!(P :: LinearElasticityHomogenizationProblem,
   P
 end
 
-function Base.setindex!(P :: LinearElasticityHomogenizationProblemWithFields,
-                        S :: LinearElasticityProblem,
-                        i :: Int)
+function Base.setindex!(
+                        P ::
+                        LinearElasticityHomogenizationProblemWithFields{T,N},
+                        S :: LinearElasticityProblem{T,N},
+                        i :: Int
+                       ) where {T,N}
   @argcheck 1 <= i
   @argcheck i <= 6
   if isnull(P.effectiveStiffness)

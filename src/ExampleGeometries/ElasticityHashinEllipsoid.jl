@@ -1,3 +1,5 @@
+export ElasticityHashinEllipsoid
+
 # [geometryFunction] = Elasticity_Hashin_circle(M,...) generates the Hashin structure for the equations of linear elasticity
 #
 # OPTIONAL ARGUMENTS

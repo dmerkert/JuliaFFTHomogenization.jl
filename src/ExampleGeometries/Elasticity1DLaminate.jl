@@ -2,7 +2,7 @@ export Elasticity1DLaminate
 
 function Elasticity1DLaminate(lattice :: Lattice)
   @argcheck lattice.d == 3
-  @argcheck lattice.dimension == 1
+  @argcheck lattice.rank == 1
   @argcheck isdiag(lattice.M)
   @argcheck lattice.m == 10
 

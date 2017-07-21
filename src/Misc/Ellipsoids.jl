@@ -20,7 +20,12 @@ export DepolarizationFactors,
 #   d3: depolarization factor in 3-direction
 
 
-function DepolarizationFactors{R <: Real}(l1::R,l2::R,l3::R)
+function DepolarizationFactors(
+                               l1 :: R,
+                               l2 :: R,
+                               l3 :: R
+                              ) where {R <: Real}
+
   @argcheck l1 > 0
   @argcheck l2 > 0
   @argcheck l3 > 0
@@ -55,7 +60,13 @@ function DepolarizationFactors{R <: Real}(l1::R,l2::R,l3::R)
 
 end
 
-function CartesianToEllipsoidal{R <: Real}(x::Array{R,1},c1::R,c2::R,c3::R)
+function CartesianToEllipsoidal(
+                                x :: Array{R,1},
+                                c1 :: R,
+                                c2 :: R,
+                                c3 :: R
+                               ) where {R <: Real}
+
   @argcheck length(x) == 3
   @argcheck c1 > 0
   @argcheck c2 > 0

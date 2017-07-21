@@ -8,30 +8,40 @@ immutable BasicScheme <: Solver
   convergenceCriterion :: ConvergenceCriterion
 
   BasicScheme(;
-               tol=1e-6,
-               maxIter=100,
-               verbose=false,
-               printSkip=50,
-               convergenceCriterion = CauchyConvergenceCriterion()
-              ) = new(tol,maxIter,verbose,printSkip,convergenceCriterion)
+                 tol :: Float64 = 1e-6,
+                 maxIter :: Int = 100,
+                 verbose :: Bool = false,
+                 printSkip :: Int = 50,
+                 convergenceCriterion :: C = CauchyConvergenceCriterion()
+                ) where {C <: ConvergenceCriterion} = new(
+                                  tol,
+                                  maxIter,
+                                  verbose,
+                                  printSkip,
+                                  convergenceCriterion
+                                 )
 end
 
-function _solve!{G <: GradientSolutionTensor,
-                 F <: FluxSolutionTensor,
-                 R <: Real,
-                 C <: Complex
-                }(
-                  gradient            :: SolutionTensorField{R,G},
-                  flux                :: SolutionTensorField{R,F},
-                  gradientFourier     :: SolutionTensorField{C,G},
-                  fluxFourier         :: SolutionTensorField{C,F},
-                  coefficientField    :: CoefficientTensorField,
-                  macroscopicGradient :: G,
-                  solver              :: BasicScheme,
-                  gamma               :: GreenOperator,
-                  transformation      :: Transformation,
-                  lattice             :: Lattice
-                 )
+function _solve!(
+                 gradient            :: SolutionTensorField{R,G,N},
+                 flux                :: SolutionTensorField{R,F,N},
+                 gradientFourier     :: SolutionTensorField{C,G,N},
+                 fluxFourier         :: SolutionTensorField{C,F,N},
+                 coefficientField    :: CoefficientTensorField{T,M},
+                 macroscopicGradient :: G,
+                 solver              :: BasicScheme,
+                 gamma               :: GreenOperator,
+                 transformation      :: Transformation,
+                 lattice             :: Lattice
+                ) where {
+                         G <: GradientSolutionTensor,
+                         F <: FluxSolutionTensor,
+                         R <: Real,
+                         C <: Complex,
+                         N,
+                         M,
+                         T
+                        }
 
   init!(gradient,macroscopicGradient)
   referenceTensor = getReferenceTensor(coefficientField,solver)

@@ -5,28 +5,36 @@ export FFTTransformation,
 
 immutable FFTTransformation <: Transformation end
 
-function transform!{C <: Complex,
-                    R <: Real,
-                    F,
-                    G}(frequencyField :: SolutionTensorField{C,F},
-                       pointField :: SolutionTensorField{R,G},
-                       transformation :: FFTTransformation,
-                       L :: Lattice
-                      )
+function transform!(
+                    frequencyField :: SolutionTensorField{C,F,N},
+                    pointField :: SolutionTensorField{R,G,N},
+                    transformation :: FFTTransformation,
+                    L :: Lattice
+                   ) where {
+                            C <: Complex,
+                            R <: Real,
+                            F,
+                            G,
+                            N
+                           }
 
   frequencyField.val =
   patternfft(pointField.val,L,LastDimensionsFFT)
   frequencyField
 end
 
-function transformInverse!{C <: Complex,
-                           R <: Real,
-                           F,
-                           G}(pointField :: SolutionTensorField{R,G},
-                              frequencyField :: SolutionTensorField{C,F},
-                              transformation :: FFTTransformation,
-                              L :: Lattice
-                             )
+function transformInverse!(
+                           pointField :: SolutionTensorField{R,G,N},
+                           frequencyField :: SolutionTensorField{C,F,N},
+                           transformation :: FFTTransformation,
+                           L :: Lattice
+                          ) where {
+                                   C <: Complex,
+                                   R <: Real,
+                                   F,
+                                   G,
+                                   N
+                                  }
 
   pointField.val = patternifft(frequencyField.val,L,LastDimensionsFFT)
   pointField

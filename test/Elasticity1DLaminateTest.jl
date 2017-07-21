@@ -2,20 +2,22 @@ using JuliaFFTHomogenization
 using Base.Test
 using MPAWL
 
-function test1DLaminate(L :: Lattice,
-                        convergenceCriterion :: ConvergenceCriterion
-                       )
+function test1DLaminate(L,
+                        convergenceCriterion :: C
+                       ) where {C}
+
   problem = Elasticity1DLaminate(L)
   problemNumeric = copy(problem)
 
   approximationMethod = ApproximationMethod(FFTTransformation(),Gamma0())
   solver = BasicScheme(
-                       printSkip=1,
-                       verbose=false,
-                       maxIter=1000,
-                       tol=1e-10,
+                       printSkip = 1,
+                       verbose = false,
+                       maxIter = 1000,
+                       tol = 1e-10,
                        convergenceCriterion = convergenceCriterion
                       )
+
   solve!(problemNumeric,approximationMethod,solver)
 
   CEff = get(problem.effectiveStiffness).C
