@@ -36,7 +36,7 @@ function transformInverse!(
                                    N
                                   }
 
-  pointField.val = patternifft(frequencyField.val,L,[2:(L.rank+1)...])
+  pointField.val = real(patternifft(frequencyField.val,L,[2:(L.rank+1)...]))
   pointField
 end
 
