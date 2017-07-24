@@ -130,6 +130,7 @@ for op in [:+,:-]
   end
 end
 
+#computes c=Ab
 function mult!(
                c :: SolutionTensorField{R,F1,M},
                A :: CoefficientTensorField{T,N},
@@ -138,8 +139,62 @@ function mult!(
   @argcheck size(A) == size(b)
   @argcheck size(b) == size(c)
 
-  for i in CartesianRange(size(A))
-    c[i] = mult!(c[i],A[i],b[i])
+  tmpb = Strain()
+  tmpc = Stress()
+  _mult!(c,A,b,tmpc,tmpb,CartesianRange(size(A)))
+end
+
+#computes c=(A-B)b for B constant
+function mult!(
+               c :: SolutionTensorField{R,F1,M},
+               A :: CoefficientTensorField{T1,N},
+               B :: T2,
+               b :: SolutionTensorField{R,F2,M}
+              ) where {R,F1,F2,T1,T2,N,M}
+  @argcheck size(A) == size(b)
+  @argcheck size(b) == size(c)
+
+  tmpb = Strain()
+  tmpc1 = Stress()
+  tmpc2 = Stress()
+  _mult!(c,A,B,b,tmpc1,tmpc2,tmpb,CartesianRange(size(A)))
+end
+
+function _mult!(
+               c :: SolutionTensorField{R,F1,M},
+               A :: CoefficientTensorField{T,N},
+               b :: SolutionTensorField{R,F2,M},
+               tmpc :: F3,
+               tmpb :: F4,
+               range :: CartesianRange{CartesianIndex{N}}
+
+              ) where {R,F1,F2,F3,F4,T,N,M}
+
+  for i in range
+    tmpb.val .= b.val[:,i]
+    mult!(tmpc,A[i],tmpb)
+    c.val[:,i] .= tmpc.val
+  end
+  c
+end
+
+function _mult!(
+               c :: SolutionTensorField{R,F1,M},
+               A :: CoefficientTensorField{T1,N},
+               B :: T2,
+               b :: SolutionTensorField{R,F2,M},
+               tmpc1 :: F3,
+               tmpc2 :: F3,
+               tmpb :: F4,
+               range :: CartesianRange{CartesianIndex{N}}
+
+              ) where {R,F1,F2,F3,F4,T1,T2,N,M}
+
+  for i in range
+    tmpb.val .= b.val[:,i]
+    mult!(tmpc1,A[i],tmpb)
+    mult!(tmpc2,B,tmpb)
+    c.val[:,i] .= tmpc1.val - tmpc2.val
   end
   c
 end
