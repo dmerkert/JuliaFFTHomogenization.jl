@@ -35,6 +35,8 @@ include("LinearElasticity/GreenOperators.jl")
 include("LinearElasticity/Problem.jl")
 include("LinearElasticity/ReferenceTensor.jl")
 
+include("LinearElasticity/Laminate.jl")
+
 include("Misc/Misc.jl")
 include("Misc/Ellipsoids.jl")
 

@@ -1,4 +1,3 @@
-using TimerOutputs
 export BasicScheme
 
 immutable BasicScheme <: Solver
@@ -44,8 +43,6 @@ function _solve!(
                          T
                         }
 
-  global to = TimerOutput()
-
   init!(gradient,macroscopicGradient)
   referenceTensor = getReferenceTensor(coefficientField,solver)
 
@@ -63,28 +60,28 @@ function _solve!(
   end
 
   while (error > solver.tol) && (iterationStep <= solver.maxIter)
-    @timeit to "flux" flux = mult!(flux,
+   flux = mult!(flux,
                  coefficientField,
                  referenceTensor,
                  gradient
                 )
-    @timeit to "transform" transform!(fluxFourier,
+    transform!(fluxFourier,
                flux,
                transformation,
                lattice
               )
-    @timeit to "gamma" mult!(gradientFourier,
+    mult!(gradientFourier,
           gamma,
           fluxFourier,
           referenceTensor,
           lattice
          )
-    @timeit to "setAvg" setAveragingFrequency!(gradientFourier,
+    setAveragingFrequency!(gradientFourier,
                            macroscopicGradient,
                            transformation,
                            lattice
                           )
-    @timeit to "invTransform" transformInverse!(gradient,
+    transformInverse!(gradient,
                       gradientFourier,
                       transformation,
                       lattice
@@ -98,6 +95,5 @@ function _solve!(
     end
     set!(solver.convergenceCriterion,gradient)
   end
-  show(to)
   gradient
 end

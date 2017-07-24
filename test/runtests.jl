@@ -1,9 +1,20 @@
-include("strainStressTest.jl")
-include("stiffnessTensorTest.jl")
-include("typetest.jl")
+include("Base/ConvergenceCriterion.jl")
+include("Base/Solvers.jl")
+include("Base/Transformations.jl")
+include("Base/Types.jl")
+include("Base/Solvers/BasicScheme.jl")
+
+include("LinearElasticity/GreenOperators.jl")
+include("LinearElasticity/Laminate.jl")
+include("LinearElasticity/StiffnessParameters.jl")
+include("LinearElasticity/StiffnessTensors.jl")
+include("LinearElasticity/StrainStressDisplacement.jl")
+include("LinearElasticity/StrainStressDisplacementFields.jl")
+
 include("Elasticity1DLaminateTest.jl")
 include("ElasticityHashinEllipsoidGenerationTest.jl")
 include("ElasticityHashinEllipsoidTest.jl")
+
 
 
 

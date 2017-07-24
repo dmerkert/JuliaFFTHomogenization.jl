@@ -15,7 +15,7 @@ using Base.Test
   stress.val = complex([ 9.571669482429456 ,4.853756487228412 ,8.002804688888002
                         ,1.418863386272153 ,4.217612826262750 ,9.157355251890671])
 
-  mult!(strain,gamma,stress,CIsotropic,patternPoints)
+  mult!(strain,gamma,stress,CIsotropic,patternPoints,zeros((6,6)))
 
   @test strain.val ≈ 
   [
@@ -27,7 +27,7 @@ using Base.Test
    -0.348637477862576
   ]+0.0im
 
-  mult!(strain,gamma,stress,CIsotropic,[0.0,0.0,0.0])
+  mult!(strain,gamma,stress,CIsotropic,[0.0,0.0,0.0],zeros((6,6)))
 
   @test norm(strain.val) == 0.0
 end
