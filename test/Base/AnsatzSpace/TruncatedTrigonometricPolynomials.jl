@@ -3,7 +3,7 @@ using Base.Test
 using MPAWL
 
 @testset "Transformation" begin
-  transform = FFTTransformation()
+  transform = TruncatedTrigonometricPolynomials()
 
   L = Lattice(diagm([3;4;5]))
 

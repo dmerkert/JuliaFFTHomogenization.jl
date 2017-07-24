@@ -1,6 +1,6 @@
 include("Base/ConvergenceCriterion.jl")
 include("Base/Solvers.jl")
-include("Base/Transformations.jl")
+include("Base/AnsatzSpace/TruncatedTrigonometricPolynomials.jl")
 include("Base/Types.jl")
 include("Base/Solvers/BasicScheme.jl")
 

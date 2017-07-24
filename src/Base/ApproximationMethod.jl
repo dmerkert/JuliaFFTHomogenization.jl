@@ -1,6 +1,6 @@
 export ApproximationMethod
 
 type ApproximationMethod
-  transformation :: Transformation
+  ansatzSpace :: AnsatzSpace
   gamma :: GreenOperator
 end

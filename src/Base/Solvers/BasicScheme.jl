@@ -31,7 +31,7 @@ function _solve!(
                  macroscopicGradient :: G,
                  solver              :: BasicScheme,
                  gamma               :: GreenOperator,
-                 transformation      :: Transformation,
+                 ansatzSpace         :: AnsatzSpace,
                  lattice             :: Lattice
                 ) where {
                          G <: GradientSolutionTensor,
@@ -59,6 +59,7 @@ function _solve!(
     println(repeat("-", 45))
   end
 
+  values2Coefficients!(gradient,ansatzSpace,lattice)
   while (error > solver.tol) && (iterationStep <= solver.maxIter)
    flux = mult!(flux,
                  coefficientField,
@@ -67,7 +68,7 @@ function _solve!(
                 )
     transform!(fluxFourier,
                flux,
-               transformation,
+               ansatzSpace,
                lattice
               )
     mult!(gradientFourier,
@@ -78,12 +79,12 @@ function _solve!(
          )
     setAveragingFrequency!(gradientFourier,
                            macroscopicGradient,
-                           transformation,
+                           ansatzSpace,
                            lattice
                           )
     transformInverse!(gradient,
                       gradientFourier,
-                      transformation,
+                      ansatzSpace,
                       lattice
                      )
 
@@ -95,5 +96,6 @@ function _solve!(
     end
     set!(solver.convergenceCriterion,gradient)
   end
+  coefficients2Values!(gradient,ansatzSpace,lattice)
   gradient
 end

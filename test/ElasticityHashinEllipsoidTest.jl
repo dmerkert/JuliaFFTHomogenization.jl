@@ -16,7 +16,7 @@ using MPAWL
                                      )
   problemNumeric = copy(problem)
 
-  approximationMethod = ApproximationMethod(FFTTransformation(),Gamma0())
+  approximationMethod = ApproximationMethod(TruncatedTrigonometricPolynomials(),Gamma0())
   solver =
   BasicScheme(;printSkip=1,verbose=false,maxIter=200,convergenceCriterion=CauchyConvergenceCriterion())
   solve!(problemNumeric,approximationMethod,solver)

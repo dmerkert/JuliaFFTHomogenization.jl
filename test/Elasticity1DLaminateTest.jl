@@ -9,7 +9,7 @@ function test1DLaminate(L,
   problem = Elasticity1DLaminate(L)
   problemNumeric = copy(problem)
 
-  approximationMethod = ApproximationMethod(FFTTransformation(),Gamma0())
+  approximationMethod = ApproximationMethod(TruncatedTrigonometricPolynomials(),Gamma0())
   solver = BasicScheme(
                        printSkip = 1,
                        verbose = false,

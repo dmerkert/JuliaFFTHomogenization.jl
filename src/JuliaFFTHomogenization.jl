@@ -21,7 +21,8 @@ using Polynomials
 FFTW.set_num_threads(Sys.CPU_CORES)
 
 include("Base/Types.jl")
-include("Base/Transformations.jl")
+include("Base/AnsatzSpace.jl")
+include("Base/AnsatzSpace/TruncatedTrigonometricPolynomials.jl")
 include("Base/ApproximationMethod.jl")
 include("Base/ConvergenceCriterion.jl")
 include("Base/Solvers.jl")
@@ -31,7 +32,7 @@ include("LinearElasticity/StiffnessParameters.jl")
 include("LinearElasticity/StrainStressDisplacement.jl")
 include("LinearElasticity/StrainStressDisplacementFields.jl")
 include("LinearElasticity/StiffnessTensors.jl")
-include("LinearElasticity/GreenOperators.jl")
+include("LinearElasticity/GreenOperators/Gamma0Elasticity.jl")
 include("LinearElasticity/Problem.jl")
 include("LinearElasticity/ReferenceTensor.jl")
 

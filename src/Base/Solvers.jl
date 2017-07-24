@@ -20,7 +20,7 @@ function solve!(problem :: MacroscopicGradientProblem,
   _solve!(unpackProblem(problem)...,
           solver,
           approximationMethod.gamma,
-          approximationMethod.transformation,
+          approximationMethod.ansatzSpace,
           problem.lattice
          )
   postprocess!(problem)
