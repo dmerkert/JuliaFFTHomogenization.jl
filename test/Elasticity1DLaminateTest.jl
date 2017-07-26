@@ -3,16 +3,17 @@ using Base.Test
 using MPAWL
 
 function test1DLaminate(L,
-                        convergenceCriterion :: C
-                       ) where {C}
+                        convergenceCriterion,
+                        ansatzSpace :: AnsatzSpace
+                       )
 
   problem = Elasticity1DLaminate(L)
   problemNumeric = copy(problem)
 
-  approximationMethod = ApproximationMethod(TruncatedTrigonometricPolynomials(),Gamma0())
+  approximationMethod = ApproximationMethod(ansatzSpace,Gamma0())
   solver = BasicScheme(
                        printSkip = 1,
-                       verbose = false,
+                       verbose = true,
                        maxIter = 1000,
                        tol = 1e-10,
                        convergenceCriterion = convergenceCriterion
@@ -32,19 +33,34 @@ function test1DLaminate(L,
 
 end
 
-@testset "Elasticity 1D Laminate Test" begin
+function test1DLaminateDirections(
+                                  convergenceCriterion,
+                                  ansatzSpace
+                                 )
   L = Lattice(diagm([10,1,1]))
-
-  test1DLaminate(L,CauchyConvergenceCriterion())
-  test1DLaminate(L,NormConvergenceCriterion())
-
+  test1DLaminate(L,convergenceCriterion,ansatzSpace)
   L = Lattice(diagm([1,10,1]))
-
-  test1DLaminate(L,CauchyConvergenceCriterion())
-  test1DLaminate(L,NormConvergenceCriterion())
-
+  test1DLaminate(L,convergenceCriterion,ansatzSpace)
   L = Lattice(diagm([1,1,10]))
+  test1DLaminate(L,convergenceCriterion,ansatzSpace)
+end
 
-  test1DLaminate(L,CauchyConvergenceCriterion())
-  test1DLaminate(L,NormConvergenceCriterion())
+
+
+@testset "Elasticity 1D Laminate Test" begin
+  test1DLaminateDirections(
+                           CauchyConvergenceCriterion(),
+                           TruncatedTrigonometricPolynomials()
+                          )
+
+  test1DLaminateDirections(
+                           NormConvergenceCriterion(),
+                           TruncatedTrigonometricPolynomials()
+                          )
+
+  test1DLaminateDirections(
+                           CauchyConvergenceCriterion(),
+                           deLaValleePoussinMeansSpace([0.25;0.4;0.4])
+                          )
+
 end

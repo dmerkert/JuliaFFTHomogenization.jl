@@ -55,4 +55,28 @@ using MPAWL
                  get(problemNumeric.averageStress).val,
                  rtol=1e-2
                 )
+
+
+  approximationMethod =
+  ApproximationMethod(deLaValleePoussinMeansSpace([0.25;0.3;0.2]),Gamma0())
+
+
+  solver = BasicScheme(;printSkip=1,verbose=true,maxIter=200,convergenceCriterion=NormConvergenceCriterion())
+  solve!(problemNumeric,approximationMethod,solver)
+  @test isapprox(
+                 average(get(problemNumeric.strain)).val,
+                 problemNumeric.macroscopicStrain.val,
+                 rtol=1e-12
+                )
+  @test isapprox(
+                 get(problem.strain).val,
+                 get(problemNumeric.strain).val,
+                 rtol=1e-1
+                )
+
+  @test isapprox(
+                 get(problem.averageStress).val,
+                 get(problemNumeric.averageStress).val,
+                 rtol=1e-2
+                )
 end

@@ -84,3 +84,20 @@ function values2Coefficients!(
                                      }
   error("Ansatz space not implemented.")
 end
+
+function mult!(c :: SolutionTensorField{R,F1,M},
+               G :: GreenOperator,
+               b :: SolutionTensorField{R,F2,M},
+               referenceCoefficient :: C,
+               L :: Lattice,
+               space :: Space
+              ) where {
+                       R,
+                       F1,
+                       F2,
+                       M,
+                       C<:CoefficientTensor,
+                       Space <: AnsatzSpace
+                      }
+  error("mult! not implemented.")
+end

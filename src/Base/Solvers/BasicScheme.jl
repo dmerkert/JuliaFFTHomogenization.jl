@@ -75,7 +75,8 @@ function _solve!(
           gamma,
           fluxFourier,
           referenceTensor,
-          lattice
+          lattice,
+          ansatzSpace
          )
     setAveragingFrequency!(gradientFourier,
                            macroscopicGradient,
