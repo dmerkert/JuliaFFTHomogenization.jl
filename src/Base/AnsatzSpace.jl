@@ -21,7 +21,7 @@ function transform!(
                             Space <: AnsatzSpace
                            }
 
-  frequencyField.val =
+  frequencyField.val .=
   patternfft(pointField.val,L,[2:(L.rank+1)...])
   frequencyField
 end
@@ -40,7 +40,7 @@ function transformInverse!(
                                    Space <: AnsatzSpace
                                   }
 
-  pointField.val = real(patternifft(frequencyField.val,L,[2:(L.rank+1)...]))
+  pointField.val .= real(patternifft(frequencyField.val,L,[2:(L.rank+1)...]))
   pointField
 end
 

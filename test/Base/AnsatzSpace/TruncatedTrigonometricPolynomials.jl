@@ -39,4 +39,44 @@ using MPAWL
 
   @test [1.0;2.0;3.0;4.0;5.0;6.0] ≈ avg
 
+
+
+
+  transform = TruncatedTrigonometricPolynomials()
+
+  L = Lattice([64 1 0; 0 64 0; 0 0 1])
+
+  strain = SolutionTensorField{Float64,Strain}(rand((6,L.size...)))
+  strainC = SolutionTensorField{Complex128,Strain}(rand(Complex128,(6,L.size...)))
+
+  avg = sum(strain.val,(2))[:]/L.m
+
+  transform!(
+             strainC,
+             strain,
+             transform,
+             L
+            )
+
+  @test strainC.val[:,1,1,1]/L.m ≈ avg
+
+  setAveragingFrequency!(
+                         strainC,
+                         Strain([1.0;2.0;3.0;4.0;5.0;6.0]),
+                         transform,
+                         L
+                        )
+
+  transformInverse!(
+                    strain,
+                    strainC,
+                    transform,
+                    L
+                   )
+
+  avg = sum(strain.val,(2))[:]/L.m
+
+  @test [1.0;2.0;3.0;4.0;5.0;6.0] ≈ avg
+
+
 end

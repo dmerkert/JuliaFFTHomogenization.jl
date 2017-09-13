@@ -1,3 +1,4 @@
+__precompile__()
 module JuliaFFTHomogenization
 
 import Base.*
@@ -45,5 +46,6 @@ include("Misc/Ellipsoids.jl")
 
 include("ExampleGeometries/ElasticityHashinEllipsoid.jl")
 include("ExampleGeometries/Elasticity1DLaminate.jl")
+include("ExampleGeometries/ElasticitySingleFiber.jl")
 
 end # module

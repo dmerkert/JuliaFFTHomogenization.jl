@@ -17,12 +17,12 @@ function solve!(problem :: MacroscopicGradientProblem,
                 approximationMethod :: ApproximationMethod,
                 solver :: Solver)
   initializeProblem!(problem)
-  _solve!(unpackProblem(problem)...,
+  statistics = _solve!(unpackProblem(problem)...,
           solver,
           approximationMethod.gamma,
           approximationMethod.ansatzSpace,
           problem.lattice
          )
   postprocess!(problem)
-  problem
+  statistics
 end

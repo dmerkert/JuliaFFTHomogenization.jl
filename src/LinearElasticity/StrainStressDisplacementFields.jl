@@ -1,7 +1,8 @@
 export StrainField,
        StressField,
        DisplacementField,
-       average
+       average,
+       normDifference
 
 
 
@@ -79,4 +80,86 @@ getindex(field::StressField{R,N}, I::Vararg{Int}) where {R,N} = Stress(field.val
 getindex(field::StressField{R,N}, I::CartesianIndex) where {R,N} = field[I.I...]
 getindex(field::DisplacementField{R,N}, I::Vararg{Int}) where {R,N} = Displacement(field.val[:,I...])
 getindex(field::DisplacementField{R,N}, I::CartesianIndex) where {R,N} = field[I.I...]
+
+function normDifference(field1 :: StrainField{R,N1},
+                        L1 :: Lattice,
+                        field2 :: StrainField{R,N2},
+                        L2 :: Lattice,
+                        space :: Space
+                       ) where {
+                                R <: Real,
+                                N1,
+                                N2,
+                                Space <: AnsatzSpace
+                               }
+    #assumes that L2 is a tensor product lattice
+    @argcheck norm(diagm(diag(L2.M))-L2.M) < 1e-12
+    #assumes that L1 generates subpattern of L2
+    @argcheck isSublattice(L2,L1)
+
+
+    field1Frequency = StrainField{Complex128}(size(field1))
+    field2Frequency = StrainField{Complex128}(size(field2))
+
+    transform!(
+               field1Frequency,
+               field1,
+               space,
+               L1
+              )
+
+    transform!(
+               field2Frequency,
+               field2,
+               space,
+               L2
+              )
+
+    _normDifference(field1Frequency,
+                    L1,
+                    field2Frequency,
+                    L2,
+                    space,
+                    getFrequencyIterator(L2)
+                   )
+end
+
+function _normDifference(field1Frequency :: StrainField{R,N1},
+                         L1 :: Lattice{I1,MF1,MF12},
+                        field2Frequency :: StrainField{R,N2},
+                        L2 :: Lattice{I2,MF2,MF22},
+                        space :: Space,
+                        range :: CartesianRange{RR}
+                       ) where {
+                                R <: Complex,
+                                N1,
+                                N2,
+                                I1,MF1,MF12,
+                                I2,MF2,MF22,
+                                RR,
+                                Space <: AnsatzSpace
+                               }
+
+
+    diffNorm = 0.0
+    refNorm = 0.0
+    L1Unit = Lattice(L1.M,target="unit")
+    L2Unit = Lattice(L2.M,target="unit")
+    for coord in range
+        freq = getFrequencyPoint(L2,coord)
+        h1 = frequencyLatticeBasisDecomp(freq,L1Unit)
+        h2 = frequencyLatticeBasisDecomp(freq,L2Unit)
+        ck1 = ck(freq,L1,space)/L1.m
+        ck2 = ck(freq,L2,space)/L2.m
+        refNorm += norm(
+                        field2Frequency[(h2+1)...].val*ck2
+                       )^2
+        diffNorm += norm(
+                        field2Frequency[(h2+1)...].val*ck2 -
+                        field1Frequency[(h1+1)...].val*ck1
+                        )^2
+    end
+
+    sqrt(diffNorm)/sqrt(refNorm)
+end
 

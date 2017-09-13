@@ -52,25 +52,41 @@ function _solve!(
   error = Inf
   iterationStep = 0
   timeStart = time()
-  elapedTime = 0
+  elapsedTime = 0.0
 
   if solver.verbose
+    sizeGradient = Base.summarysize(gradient)
+    sizeGradientFourier = Base.summarysize(gradientFourier)
+    sizeCoefficients = Base.summarysize(coefficientField)
+    sizeTotal = sizeGradient + sizeGradientFourier + sizeCoefficients
+    println(
+            string(
+                   "Size Gradient: ",round(sizeGradient/(1024^2),1),"MB\n",
+                   "Size Gradient Fourier: ",round(sizeGradientFourier/(1024^2),1),"MB\n",
+                   "Size Coefficients: ",round(sizeCoefficients/(1024^2),1),"MB\n",
+                   "Size Total: ", round(sizeTotal/(1024^2),1),"MB\n"
+                  )
+           )
     @printf "%-13s%-15s%-17s\n" "Iteration" "Distance" "Elapsed (seconds)"
     println(repeat("-", 45))
   end
 
   values2Coefficients!(gradient,ansatzSpace,lattice)
   while (error > solver.tol) && (iterationStep <= solver.maxIter)
+    #= asd = copy(gradient) =#
+
    flux = mult!(flux,
                  coefficientField,
                  referenceTensor,
                  gradient
                 )
+
     transform!(fluxFourier,
                flux,
                ansatzSpace,
                lattice
               )
+
     mult!(gradientFourier,
           gamma,
           fluxFourier,
@@ -78,11 +94,13 @@ function _solve!(
           lattice,
           ansatzSpace
          )
+
     setAveragingFrequency!(gradientFourier,
                            macroscopicGradient,
                            ansatzSpace,
                            lattice
                           )
+
     transformInverse!(gradient,
                       gradientFourier,
                       ansatzSpace,
@@ -98,5 +116,6 @@ function _solve!(
     set!(solver.convergenceCriterion,gradient)
   end
   coefficients2Values!(gradient,ansatzSpace,lattice)
-  gradient
+  converged = (error < solver.tol)
+  (converged,elapsedTime,iterationStep,error,solver.maxIter,solver.tol)
 end

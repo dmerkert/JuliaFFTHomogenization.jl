@@ -1,5 +1,7 @@
 export TruncatedTrigonometricPolynomials,
-mult!
+mult!,
+kernel,
+ck
 
 type TruncatedTrigonometricPolynomials <: AnsatzSpace end
 
@@ -67,10 +69,36 @@ function _mult!(c :: SolutionTensorField{R,F1,M},
               ) where {R,F1,F2,M,C<:CoefficientTensor,TMPG,N,F3,F4,I}
 
   for i in range
-    getFrequencyPoint!(L,i,tmpFrequency,tmpFrequencyFloat)
+    #= getFrequencyPoint!(L,i,tmpFrequency,tmpFrequencyFloat) =#
+    tmpFrequency = getFrequencyPoint(L,i)
     tmpb.val .= b.val[1:6,i]
     mult!(tmpc,G,tmpb,referenceCoefficient,tmpFrequency,tmpGamma)
     c.val[1:6,i] .= tmpc.val
   end
   c
+end
+
+@inline function kernel(
+                x :: Array{R,1},
+                space :: TruncatedTrigonometricPolynomials
+               ) where {
+                        R <: Real
+                       }
+
+  if all(x .< 1.0/2.0) && all(x .>= -1.0/2.0)
+    return 1.0
+  else 
+    return 0.0
+  end
+end
+
+@inline function ck(
+            k :: Array{I,1},
+            L :: Lattice{LI,MF,MF2},
+            space :: TruncatedTrigonometricPolynomials
+           ) where {
+                    I <: Integer,
+                    LI,MF,MF2
+                   }
+  kernel(L.MTFactorize\k,space)
 end
