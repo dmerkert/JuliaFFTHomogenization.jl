@@ -45,3 +45,41 @@ using Base.Test
     end
   end
 end
+
+@testset "Composite StiffnessTensors" begin
+  E1 = YoungsModulus(1.0)
+  E2 = YoungsModulus(2.0)
+  l1 = LamesFirstParameter(0.1)
+  l2 = LamesFirstParameter(0.2)
+
+  C1 = IsotropicStiffnessTensor(E1,l1)
+  C2 = IsotropicStiffnessTensor(E2,l2)
+
+  volumes = [0.25;0.75]
+
+  CArithmetic = CompositeArithmeticMeanStiffnessTensor([C1;C2],volumes)
+  CArithmeticA = convert(AnisotropicStiffnessTensor,CArithmetic)
+
+  @test volumes[1]*convert(AnisotropicStiffnessTensor,C1).C + 
+  volumes[2]*convert(AnisotropicStiffnessTensor,C2).C ≈
+  convert(AnisotropicStiffnessTensor,CArithmeticA).C
+
+  @test inv(C1).C*convert(AnisotropicStiffnessTensor,C1).C ≈ eye(6)
+
+  CHarmonic = CompositeHarmonicMeanStiffnessTensor([C1;C2],volumes)
+  CHarmonicA = convert(AnisotropicStiffnessTensor,CHarmonic)
+
+  @test inv(
+            volumes[1]*inv(convert(AnisotropicStiffnessTensor,C1).C) + 
+            volumes[2]*inv(convert(AnisotropicStiffnessTensor,C2).C)
+           ) ≈ CHarmonicA.C
+  
+  CArithmeticHarmonic = CompositeAvgArithmeticHarmonicMeanTensor([C1;C2],volumes)
+  CArithmeticHarmonicA = convert(AnisotropicStiffnessTensor,CArithmeticHarmonic)
+
+  @test 0.5*(CArithmeticA.C+CHarmonicA.C) ≈ CArithmeticHarmonicA.C
+
+
+
+
+end

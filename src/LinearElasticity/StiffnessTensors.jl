@@ -5,7 +5,13 @@ export StiffnessTensor,
        AnisotropicStiffnessTensor,
        eig,
        mult!,
-       convert
+       convert,
+       CompositeArithmeticMeanStiffnessTensor,
+       CompositeHarmonicMeanStiffnessTensor,
+       CompositeAvgArithmeticHarmonicMeanTensor,
+       CompositeLaminateStiffnessTensor,
+       inv,
+       *
 
 
 abstract type StiffnessTensor <: CoefficientTensor end
@@ -42,6 +48,68 @@ immutable AnisotropicStiffnessTensor <: StiffnessTensor
     @argcheck size(C) == (6,6)
 
     new(C)
+  end
+end
+
+immutable CompositeLaminateStiffnessTensor{S <: StiffnessTensor} <: StiffnessTensor
+  Stiffnesses :: Array{S,1}
+  volumes :: Array{Float64,1}
+  normal :: Array{Float64,1}
+  transformation :: Array{Int,2}
+
+  function CompositeLaminateStiffnessTensor{S}(Stiffnesses :: Array{S,1},
+                                               volumes :: Array{Float64,1},
+                                               normal :: Array{Float64,1},
+                                               transformation :: Array{Int,2}
+                                              ) where {S}
+    @argcheck length(Stiffnesses) > 0
+    @argcheck length(Stiffnesses) == length(volumes)
+    @argcheck length(normal) == 3
+    @argcheck all(volumes >= 0.0)
+    @argcheck sum(volumes) > 0.0
+    @argcheck round(Int,det(transformation)) != 0
+    @argcheck size(transformation,1) == size(transformation,2)
+    @argcheck size(transformation,1) == 3
+
+    volumes /= sum(volumes)
+    normal /= norm(normal)
+
+    new(
+        Stiffnesses,
+        volumes,
+        normal,
+        transformation
+       )
+  end
+end
+
+for tensor in [
+               :CompositeArithmeticMeanStiffnessTensor,
+               :CompositeHarmonicMeanStiffnessTensor,
+               :CompositeAvgArithmeticHarmonicMeanTensor
+              ]
+  @eval begin
+    immutable ($tensor){S <: StiffnessTensor,R} <: StiffnessTensor
+      Stiffnesses :: Array{S,1}
+      volumes :: Array{R,1}
+
+      function ($tensor)(Stiffnesses :: Array{S,1},
+                         volumes :: Array{R,1}
+                        ) where {S,R<:Real}
+        @argcheck length(Stiffnesses) > 0
+        @argcheck length(Stiffnesses) == length(volumes)
+        @argcheck all(volumes .>= 0.0)
+        @argcheck sum(volumes) > 0.0
+
+        volumes /= sum(volumes)
+
+        new{S,R}(
+                 Stiffnesses,
+                 volumes
+                )
+      end
+
+    end
   end
 end
 
@@ -196,6 +264,37 @@ function convert(::Type{TransversalIsotropicZStiffnessTensor},
   TransversalIsotropicZStiffnessTensor(E,E,nu,nu,nu,mu)
 end
 
+convert(::Type{AnisotropicStiffnessTensor},
+        stiffness::CompositeArithmeticMeanStiffnessTensor
+       ) =
+convert(AnisotropicStiffnessTensor,
+        sum(stiffness.volumes.*stiffness.Stiffnesses)
+       ) :: AnisotropicStiffnessTensor
+
+convert(::Type{AnisotropicStiffnessTensor},
+        stiffness::CompositeHarmonicMeanStiffnessTensor
+       ) =
+convert(AnisotropicStiffnessTensor,
+        inv(
+            sum(
+                stiffness.volumes.*inv.(stiffness.Stiffnesses)
+               )
+           )
+       ) :: AnisotropicStiffnessTensor
+
+
+convert(::Type{AnisotropicStiffnessTensor},
+        stiffness::CompositeAvgArithmeticHarmonicMeanTensor
+       ) =
+0.5*(
+     sum(stiffness.volumes.*stiffness.Stiffnesses)+
+     inv(
+         sum(
+             stiffness.volumes.*inv.(stiffness.Stiffnesses)
+            )
+        )
+    ) :: AnisotropicStiffnessTensor
+
 
 promote_rule(::Type{TransversalIsotropicZStiffnessTensor},
              ::Type{IsotropicStiffnessTensor}
@@ -204,6 +303,19 @@ promote_rule(::Type{TransversalIsotropicZStiffnessTensor},
 promote_rule{S <: StiffnessTensor}(::Type{AnisotropicStiffnessTensor},
              ::Type{S}
             ) = AnisotropicStiffnessTensor
+
+
+for tensor in [
+               :CompositeLaminateStiffnessTensor,
+               :CompositeArithmeticMeanStiffnessTensor,
+               :CompositeHarmonicMeanStiffnessTensor,
+               :CompositeAvgArithmeticHarmonicMeanTensor
+              ]
+
+  @eval promote_rule{S <: StiffnessTensor}(::Type{($tensor)},
+                                           ::Type{S}
+                                          ) = AnisotropicStiffnessTensor
+end
 
 promote_rule{S <: StiffnessTensor}(::Type{DiagonalStiffnessTensor},
              ::Type{S}
@@ -238,6 +350,20 @@ for i in [:+,:-]
   ($i)(promote(A,B)...)
 end
 
+*(a :: R, A :: IsotropicStiffnessTensor) where {R <: Real} =
+IsotropicStiffnessTensor(
+                         LamesFirstParameter(a*A.lambda),
+                         ShearModulus(a*A.mu)
+                        )
+
+*(a :: R, A :: DiagonalStiffnessTensor) where {R <: Real} =
+DiagonalStiffnessTensor(a*A.v)
+
+*(a :: R, A :: S) where {R <: Real,S <: StiffnessTensor} =
+AnisotropicStiffnessTensor(a*convert(AnisotropicStiffnessTensor,A).C)
 
 
+Base.inv(A :: DiagonalStiffnessTensor) = DiagonalStiffnessTensor(1.0./A.v)
 
+Base.inv(A :: S) where {S <: StiffnessTensor} =
+AnisotropicStiffnessTensor(inv(convert(AnisotropicStiffnessTensor,A).C))
