@@ -57,7 +57,7 @@ immutable CompositeLaminateStiffnessTensor{S <: StiffnessTensor} <: StiffnessTen
   normal :: Array{Float64,1}
   transformation :: Array{Int,2}
 
-  function CompositeLaminateStiffnessTensor{S}(Stiffnesses :: Array{S,1},
+  function CompositeLaminateStiffnessTensor(Stiffnesses :: Array{S,1},
                                                volumes :: Array{Float64,1},
                                                normal :: Array{Float64,1},
                                                transformation :: Array{Int,2}
@@ -65,16 +65,18 @@ immutable CompositeLaminateStiffnessTensor{S <: StiffnessTensor} <: StiffnessTen
     @argcheck length(Stiffnesses) > 0
     @argcheck length(Stiffnesses) == length(volumes)
     @argcheck length(normal) == 3
-    @argcheck all(volumes >= 0.0)
+    @argcheck all(volumes .>= 0.0)
     @argcheck sum(volumes) > 0.0
     @argcheck round(Int,det(transformation)) != 0
     @argcheck size(transformation,1) == size(transformation,2)
     @argcheck size(transformation,1) == 3
 
     volumes /= sum(volumes)
-    normal /= norm(normal)
+    if norm(normal) > 0.0
+      normal /= norm(normal)
+    end
 
-    new(
+    new{S}(
         Stiffnesses,
         volumes,
         normal,
@@ -185,6 +187,74 @@ function mult!{R}(stress::Stress{R},
   stress
 end
 
+function mult!{R}(stress::Stress{R},
+                  stiffness::CompositeArithmeticMeanStiffnessTensor,
+                  strain::Strain{R}
+                 )
+  mult!(
+        stress,
+        sum(stiffness.volumes.*stiffness.Stiffnesses),
+        strain
+  )
+end
+
+function mult!{R}(stress::Stress{R},
+                  stiffness::CompositeHarmonicMeanStiffnessTensor,
+                  strain::Strain{R}
+                 )
+  mult!(
+        stress,
+        inv(
+            sum(
+                stiffness.volumes.*inv.(stiffness.Stiffnesses)
+               )
+           ),
+        strain
+       )
+end
+
+function mult!{R}(stress::Stress{R},
+                  stiffness::CompositeAvgArithmeticHarmonicMeanTensor,
+                  strain::Strain{R}
+                 )
+  mult!(
+        stress,
+        0.5*(
+             sum(stiffness.volumes.*stiffness.Stiffnesses)+
+             inv(
+                 sum(
+                     stiffness.volumes.*inv.(stiffness.Stiffnesses)
+                    )
+                )
+            ),
+        strain
+       )
+end
+
+function mult!{R}(stress::Stress{R},
+                  stiffness::CompositeLaminateStiffnessTensor,
+                  strain::Strain{R}
+                 )
+  if norm(stiffness.normal) > 0.0
+    return mult!(
+                 stress,
+                 transformation(
+                                stiffness.Stiffnesses,
+                                stiffness.volumes,
+                                stiffness.normal,
+                                stiffness.transformation
+                               ),
+                 strain
+                )
+  else
+    return mult!(
+                 stress,
+                 sum(stiffness.volumes.*stiffness.Stiffnesses),
+                 strain
+                )
+  end
+end
+
 function convert(::Type{AnisotropicStiffnessTensor},
                  stiffness::IsotropicStiffnessTensor
   )
@@ -286,15 +356,36 @@ convert(AnisotropicStiffnessTensor,
 convert(::Type{AnisotropicStiffnessTensor},
         stiffness::CompositeAvgArithmeticHarmonicMeanTensor
        ) =
-0.5*(
-     sum(stiffness.volumes.*stiffness.Stiffnesses)+
-     inv(
-         sum(
-             stiffness.volumes.*inv.(stiffness.Stiffnesses)
+convert(AnisotropicStiffnessTensor,
+        0.5*(
+             sum(stiffness.volumes.*stiffness.Stiffnesses)+
+             inv(
+                 sum(
+                     stiffness.volumes.*inv.(stiffness.Stiffnesses)
+                    )
+                )
             )
-        )
-    ) :: AnisotropicStiffnessTensor
+       ):: AnisotropicStiffnessTensor
 
+function convert(::Type{AnisotropicStiffnessTensor},
+        stiffness::CompositeLaminateStiffnessTensor
+       )
+
+  if norm(stiffness.normal) > 0.0
+    return convert(AnisotropicStiffnessTensor,
+                   transformedLaminateFormula(
+                                              stiffness.Stiffnesses,
+                                              stiffness.volumes,
+                                              stiffness.normal,
+                                              stiffness.transformation
+                                             )
+                  ) :: AnisotropicStiffnessTensor
+  else
+    return convert(AnisotropicStiffnessTensor,
+                   sum(stiffness.volumes.*stiffness.Stiffnesses)
+                  ) :: AnisotropicStiffnessTensor
+  end
+end
 
 promote_rule(::Type{TransversalIsotropicZStiffnessTensor},
              ::Type{IsotropicStiffnessTensor}

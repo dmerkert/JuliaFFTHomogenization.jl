@@ -1,4 +1,5 @@
-export laminateStiffness
+export laminateStiffness,
+       transformedLaminateFormula
 
 function laminateStiffness(
                             C1 :: T1,
@@ -19,47 +20,11 @@ function laminateStiffness(
 
   P = zeros(6,6)
 
-  P[1,1] = _evaluateProjection(n,1,1,1,1)
-  P[1,2] = _evaluateProjection(n,1,1,2,2)
-  P[1,3] = _evaluateProjection(n,1,1,3,3)
-  P[1,4] = 2.0_evaluateProjection(n,1,1,2,3)
-  P[1,5] = 2.0_evaluateProjection(n,1,1,1,3)
-  P[1,6] = 2.0_evaluateProjection(n,1,1,1,2)
-
-  P[2,1] = _evaluateProjection(n,2,2,1,1)
-  P[2,2] = _evaluateProjection(n,2,2,2,2)
-  P[2,3] = _evaluateProjection(n,2,2,3,3)
-  P[2,4] = 2.0_evaluateProjection(n,2,2,2,3)
-  P[2,5] = 2.0_evaluateProjection(n,2,2,1,3)
-  P[2,6] = 2.0_evaluateProjection(n,2,2,1,2)
-
-  P[3,1] = _evaluateProjection(n,3,3,1,1)
-  P[3,2] = _evaluateProjection(n,3,3,2,2)
-  P[3,3] = _evaluateProjection(n,3,3,3,3)
-  P[3,4] = 2.0_evaluateProjection(n,3,3,2,3)
-  P[3,5] = 2.0_evaluateProjection(n,3,3,1,3)
-  P[3,6] = 2.0_evaluateProjection(n,3,3,1,2)
-
-  P[4,1] = 2.0_evaluateProjection(n,2,3,1,1)
-  P[4,2] = 2.0_evaluateProjection(n,2,3,2,2)
-  P[4,3] = 2.0_evaluateProjection(n,2,3,3,3)
-  P[4,4] = 4.0_evaluateProjection(n,2,3,2,3)
-  P[4,5] = 4.0_evaluateProjection(n,2,3,1,3)
-  P[4,6] = 4.0_evaluateProjection(n,2,3,1,2)
-
-  P[5,1] = 2.0_evaluateProjection(n,1,3,1,1)
-  P[5,2] = 2.0_evaluateProjection(n,1,3,2,2)
-  P[5,3] = 2.0_evaluateProjection(n,1,3,3,3)
-  P[5,4] = 4.0_evaluateProjection(n,1,3,2,3)
-  P[5,5] = 4.0_evaluateProjection(n,1,3,1,3)
-  P[5,6] = 4.0_evaluateProjection(n,1,3,1,2)
-
-  P[6,1] = 2.0_evaluateProjection(n,1,2,1,1)
-  P[6,2] = 2.0_evaluateProjection(n,1,2,2,2)
-  P[6,3] = 2.0_evaluateProjection(n,1,2,3,3)
-  P[6,4] = 4.0_evaluateProjection(n,1,2,2,3)
-  P[6,5] = 4.0_evaluateProjection(n,1,2,1,3)
-  P[6,6] = 4.0_evaluateProjection(n,1,2,1,2)
+  toInverseVoigtSSymFourthOrder!(
+                                 P,
+                                 (i,j,k,l) ->
+                                 _evaluateProjection(n,i,j,k,l)
+                                )
 
   Id = eye(6)
   Id[4,4] = 0.5
@@ -107,3 +72,54 @@ function _evaluateProjection(
      ) - n[i]*n[j]*n[l]*n[m]
 end
 
+function transformedLaminateFormula(
+                                    Stiffnesses :: Array{S,1},
+                                    volumes :: Array{Float64,1},
+                                    normal :: Array{Float64,1},
+                                    transformation :: Array{R,2}
+                                   ) where {S,R}
+
+  P = Array{Float64}(6,6)
+  toInverseVoigtSSymFourthOrder!(
+                                 P,
+                                 (i,j,l,m) ->
+                                 0.5(
+                                     (j==l) *
+                                     normal[i] *
+                                     normal[m] +
+                                     (j==m) *
+                                     normal[i] *
+                                     normal[l] +
+                                     (i==l) *
+                                     normal[j] *
+                                     normal[m] +
+                                     (i==m) *
+                                     normal[j] *
+                                     normal[l]
+                                    ) -
+                                 normal[i] *
+                                 normal[j] *
+                                 normal[l] *
+                                 normal[m]
+                                )
+
+  PC = AnisotropicStiffnessTensor(P)
+
+  eigenvalues = eig.(Stiffnesses)
+  λ = max(max.(eigenvalues...)...)+1.0
+
+  λId = λ*IsotropicStiffnessTensor(LamesFirstParameter(0.0),ShearModulus(0.5))
+
+  inv(
+      1.0/λ .* (
+                inv(
+                    sum(
+                        volumes.*
+                        inv.(
+                             PC .+ λ*inv.(Stiffnesses .- λId)
+                            )
+                       )
+                   ) .- PC
+               )
+     ) .+ λId
+end
