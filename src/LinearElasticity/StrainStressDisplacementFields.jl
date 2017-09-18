@@ -151,13 +151,13 @@ function _normDifference(field1Frequency :: StrainField{R,N1},
         h2 = frequencyLatticeBasisDecomp(freq,L2Unit)
         ck1 = ck(freq,L1,space)/L1.m
         ck2 = ck(freq,L2,space)/L2.m
-        refNorm += norm(
-                        field2Frequency[(h2+1)...].val*ck2
-                       )^2
-        diffNorm += norm(
-                        field2Frequency[(h2+1)...].val*ck2 -
-                        field1Frequency[(h1+1)...].val*ck1
-                        )^2
+        refNorm += norm2(
+                        ck2*field2Frequency[(h2+1)...]
+                       )
+        diffNorm += norm2(
+                        ck2*field2Frequency[(h2+1)...] -
+                        ck1*field1Frequency[(h1+1)...]
+                        )
     end
 
     sqrt(diffNorm)/sqrt(refNorm)

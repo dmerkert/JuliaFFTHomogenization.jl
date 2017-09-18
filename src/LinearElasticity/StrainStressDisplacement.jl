@@ -211,3 +211,23 @@ function transform!{R}(tensor :: SolutionTensor, A :: Array{R,2})
   TensorArray = A*TensorArray*A'
   toVoigt!(tensor,TensorArray)
 end
+
+function norm(strain :: Strain{R}) where {R}
+  sqrt(
+       strain.val[1]^2 +
+       strain.val[2]^2 +
+       strain.val[3]^2 +
+       0.5(strain.val[4]^2) +
+       0.5(strain.val[5]^2) +
+       0.5(strain.val[6]^2)
+      )
+end
+
+function norm2(strain :: Strain{R}) where {R}
+  strain.val[1]^2 +
+  strain.val[2]^2 +
+  strain.val[3]^2 +
+  0.5(strain.val[4]^2) +
+  0.5(strain.val[5]^2) +
+  0.5(strain.val[6]^2)
+end
