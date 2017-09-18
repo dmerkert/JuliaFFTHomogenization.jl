@@ -30,47 +30,57 @@ function mult!(
     factor2 = (lambda+mu)/((lambda+2.0mu)*mu*sum(abs2,FourierIndex)^2) ::
     Float64
 
-    gamma[1,1] = _evalGamma0HatElasticity(factor1,factor2,FourierIndex,1,1,1,1)
-    gamma[1,2] = _evalGamma0HatElasticity(factor1,factor2,FourierIndex,1,1,2,2)
-    gamma[1,3] = _evalGamma0HatElasticity(factor1,factor2,FourierIndex,1,1,3,3)
-    gamma[1,4] = 2.0_evalGamma0HatElasticity(factor1,factor2,FourierIndex,1,1,2,3)
-    gamma[1,5] = 2.0_evalGamma0HatElasticity(factor1,factor2,FourierIndex,1,1,1,3)
-    gamma[1,6] = 2.0_evalGamma0HatElasticity(factor1,factor2,FourierIndex,1,1,1,2)
+    toInverseVoigtSSymFourthOrder!(
+                                   gamma,
+                                   (i,j,k,l) ->
+                                   _evalGamma0HatElasticity(
+                                                            factor1,
+                                                            factor2,
+                                                            FourierIndex,
+                                                            i,j,k,l
+                                                           )
+                                  )
+    #= gamma[1,1] = _evalGamma0HatElasticity(factor1,factor2,FourierIndex,1,1,1,1) =#
+    #= gamma[1,2] = _evalGamma0HatElasticity(factor1,factor2,FourierIndex,1,1,2,2) =#
+    #= gamma[1,3] = _evalGamma0HatElasticity(factor1,factor2,FourierIndex,1,1,3,3) =#
+    #= gamma[1,4] = 2.0_evalGamma0HatElasticity(factor1,factor2,FourierIndex,1,1,2,3) =#
+    #= gamma[1,5] = 2.0_evalGamma0HatElasticity(factor1,factor2,FourierIndex,1,1,1,3) =#
+    #= gamma[1,6] = 2.0_evalGamma0HatElasticity(factor1,factor2,FourierIndex,1,1,1,2) =#
 
-    gamma[2,1] = gamma[1,2]
-    gamma[2,2] = _evalGamma0HatElasticity(factor1,factor2,FourierIndex,2,2,2,2)
-    gamma[2,3] = _evalGamma0HatElasticity(factor1,factor2,FourierIndex,2,2,3,3)
-    gamma[2,4] = 2.0_evalGamma0HatElasticity(factor1,factor2,FourierIndex,2,2,2,3)
-    gamma[2,5] = 2.0_evalGamma0HatElasticity(factor1,factor2,FourierIndex,2,2,1,3)
-    gamma[2,6] = 2.0_evalGamma0HatElasticity(factor1,factor2,FourierIndex,2,2,1,2)
+    #= gamma[2,1] = gamma[1,2] =#
+    #= gamma[2,2] = _evalGamma0HatElasticity(factor1,factor2,FourierIndex,2,2,2,2) =#
+    #= gamma[2,3] = _evalGamma0HatElasticity(factor1,factor2,FourierIndex,2,2,3,3) =#
+    #= gamma[2,4] = 2.0_evalGamma0HatElasticity(factor1,factor2,FourierIndex,2,2,2,3) =#
+    #= gamma[2,5] = 2.0_evalGamma0HatElasticity(factor1,factor2,FourierIndex,2,2,1,3) =#
+    #= gamma[2,6] = 2.0_evalGamma0HatElasticity(factor1,factor2,FourierIndex,2,2,1,2) =#
 
-    gamma[3,1] = gamma[1,3]
-    gamma[3,2] = gamma[2,3]
-    gamma[3,3] = _evalGamma0HatElasticity(factor1,factor2,FourierIndex,3,3,3,3)
-    gamma[3,4] = 2.0_evalGamma0HatElasticity(factor1,factor2,FourierIndex,3,3,2,3)
-    gamma[3,5] = 2.0_evalGamma0HatElasticity(factor1,factor2,FourierIndex,3,3,1,3)
-    gamma[3,6] = 2.0_evalGamma0HatElasticity(factor1,factor2,FourierIndex,3,3,1,2)
+    #= gamma[3,1] = gamma[1,3] =#
+    #= gamma[3,2] = gamma[2,3] =#
+    #= gamma[3,3] = _evalGamma0HatElasticity(factor1,factor2,FourierIndex,3,3,3,3) =#
+    #= gamma[3,4] = 2.0_evalGamma0HatElasticity(factor1,factor2,FourierIndex,3,3,2,3) =#
+    #= gamma[3,5] = 2.0_evalGamma0HatElasticity(factor1,factor2,FourierIndex,3,3,1,3) =#
+    #= gamma[3,6] = 2.0_evalGamma0HatElasticity(factor1,factor2,FourierIndex,3,3,1,2) =#
 
-    gamma[4,1] = gamma[1,4]
-    gamma[4,2] = gamma[2,4]
-    gamma[4,3] = gamma[3,4]
-    gamma[4,4] = 4.0_evalGamma0HatElasticity(factor1,factor2,FourierIndex,2,3,2,3)
-    gamma[4,5] = 4.0_evalGamma0HatElasticity(factor1,factor2,FourierIndex,2,3,1,3)
-    gamma[4,6] = 4.0_evalGamma0HatElasticity(factor1,factor2,FourierIndex,2,3,1,2)
+    #= gamma[4,1] = gamma[1,4] =#
+    #= gamma[4,2] = gamma[2,4] =#
+    #= gamma[4,3] = gamma[3,4] =#
+    #= gamma[4,4] = 4.0_evalGamma0HatElasticity(factor1,factor2,FourierIndex,2,3,2,3) =#
+    #= gamma[4,5] = 4.0_evalGamma0HatElasticity(factor1,factor2,FourierIndex,2,3,1,3) =#
+    #= gamma[4,6] = 4.0_evalGamma0HatElasticity(factor1,factor2,FourierIndex,2,3,1,2) =#
 
-    gamma[5,1] = gamma[1,5]
-    gamma[5,2] = gamma[2,5]
-    gamma[5,3] = gamma[3,5]
-    gamma[5,4] = gamma[4,5]
-    gamma[5,5] = 4.0_evalGamma0HatElasticity(factor1,factor2,FourierIndex,1,3,1,3)
-    gamma[5,6] = 4.0_evalGamma0HatElasticity(factor1,factor2,FourierIndex,1,3,1,2)
+    #= gamma[5,1] = gamma[1,5] =#
+    #= gamma[5,2] = gamma[2,5] =#
+    #= gamma[5,3] = gamma[3,5] =#
+    #= gamma[5,4] = gamma[4,5] =#
+    #= gamma[5,5] = 4.0_evalGamma0HatElasticity(factor1,factor2,FourierIndex,1,3,1,3) =#
+    #= gamma[5,6] = 4.0_evalGamma0HatElasticity(factor1,factor2,FourierIndex,1,3,1,2) =#
 
-    gamma[6,1] = gamma[1,6]
-    gamma[6,2] = gamma[2,6]
-    gamma[6,3] = gamma[3,6]
-    gamma[6,4] = gamma[4,6]
-    gamma[6,5] = gamma[5,6]
-    gamma[6,6] = 4.0_evalGamma0HatElasticity(factor1,factor2,FourierIndex,1,2,1,2)
+    #= gamma[6,1] = gamma[1,6] =#
+    #= gamma[6,2] = gamma[2,6] =#
+    #= gamma[6,3] = gamma[3,6] =#
+    #= gamma[6,4] = gamma[4,6] =#
+    #= gamma[6,5] = gamma[5,6] =#
+    #= gamma[6,6] = 4.0_evalGamma0HatElasticity(factor1,factor2,FourierIndex,1,2,1,2) =#
 
     strain.val .= gamma*stress.val
   end

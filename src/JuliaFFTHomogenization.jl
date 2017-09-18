@@ -38,6 +38,7 @@ include("LinearElasticity/StiffnessTensors.jl")
 include("LinearElasticity/GreenOperators/Gamma0Elasticity.jl")
 include("LinearElasticity/Problem.jl")
 include("LinearElasticity/ReferenceTensor.jl")
+include("LinearElasticity/Tensors.jl")
 
 include("LinearElasticity/Laminate.jl")
 
