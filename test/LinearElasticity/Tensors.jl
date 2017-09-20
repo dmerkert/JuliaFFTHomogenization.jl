@@ -14,14 +14,17 @@ function f1(i,j,k,l)
 end
 
 @testset "Tensors" begin
-  T = toVoigtSSymFourthOrder(f)
-  TI = toInverseVoigtSSymFourthOrder(f)
+  T = Array{Float64}((6,6))
+  TI = Array{Float64}((6,6))
+
+  toVoigtSSymFourthOrder!(T,f)
+  toInverseVoigtSSymFourthOrder!(TI,f)
 
   @test issymmetric(T)
   @test issymmetric(TI)
 
-  T = toVoigtSSymFourthOrder(f1)
-  TI = toInverseVoigtSSymFourthOrder(f1)
+  toVoigtSSymFourthOrder!(T,f1)
+  toInverseVoigtSSymFourthOrder!(TI,f1)
 
   @test all(T .== 1.0)
   @test all(TI[1:3,1:3] .== 1.0)
