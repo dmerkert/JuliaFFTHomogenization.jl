@@ -15,6 +15,7 @@ export StiffnessTensor,
 
 
 abstract type StiffnessTensor <: CoefficientTensor end
+abstract type CompositeStiffnessTensor <: StiffnessTensor end
 
 immutable IsotropicStiffnessTensor <: StiffnessTensor
   lambda :: LamesFirstParameter
@@ -37,6 +38,7 @@ immutable DiagonalStiffnessTensor <: StiffnessTensor
   v :: Array{Float64,1}
   function DiagonalStiffnessTensor(v :: Array{Float64,1})
     @argcheck length(v) == 6
+    @argcheck !any(isnan.(v))
 
     new(v)
   end
@@ -46,41 +48,36 @@ immutable AnisotropicStiffnessTensor <: StiffnessTensor
   C :: Array{Float64,2}
   function AnisotropicStiffnessTensor(C :: Array{Float64,2})
     @argcheck size(C) == (6,6)
+    @argcheck !any(isnan.(C))
 
     new(C)
   end
 end
 
-immutable CompositeLaminateStiffnessTensor{S <: StiffnessTensor} <: StiffnessTensor
+immutable CompositeLaminateStiffnessTensor{S <: StiffnessTensor,R <: Real} <: CompositeStiffnessTensor
   Stiffnesses :: Array{S,1}
-  volumes :: Array{Float64,1}
-  normal :: Array{Float64,1}
-  transformation :: Array{Int,2}
+  volumes :: Array{R,1}
+  normal :: Array{R,1}
 
   function CompositeLaminateStiffnessTensor(Stiffnesses :: Array{S,1},
-                                               volumes :: Array{Float64,1},
-                                               normal :: Array{Float64,1},
-                                               transformation :: Array{Int,2}
-                                              ) where {S}
+                                               volumes :: Array{R,1},
+                                               normal :: Array{R,1}
+                                              ) where {S,R}
     @argcheck length(Stiffnesses) > 0
     @argcheck length(Stiffnesses) == length(volumes)
     @argcheck length(normal) == 3
     @argcheck all(volumes .>= 0.0)
     @argcheck sum(volumes) > 0.0
-    @argcheck round(Int,det(transformation)) != 0
-    @argcheck size(transformation,1) == size(transformation,2)
-    @argcheck size(transformation,1) == 3
 
     volumes /= sum(volumes)
     if norm(normal) > 0.0
       normal /= norm(normal)
     end
 
-    new{S}(
+    new{S,R}(
         Stiffnesses,
         volumes,
-        normal,
-        transformation
+        normal
        )
   end
 end
@@ -91,7 +88,7 @@ for tensor in [
                :CompositeAvgArithmeticHarmonicMeanTensor
               ]
   @eval begin
-    immutable ($tensor){S <: StiffnessTensor,R} <: StiffnessTensor
+    immutable ($tensor){S <: StiffnessTensor,R} <: CompositeStiffnessTensor
       Stiffnesses :: Array{S,1}
       volumes :: Array{R,1}
 
@@ -117,9 +114,8 @@ end
 
 #TODO: optimize für jeden Typ
 function eig(A :: AnisotropicStiffnessTensor)
-  C = A.C
-  C[:,3:6] .*= sqrt(2.0)
-  C[3:6,:] .*= sqrt(2.0)
+  C = copy(A.C)
+  toMandelFromVoigt!(C)
   eigvals(C)
 end
 eig{S <: StiffnessTensor}(A :: S) = eig(convert(AnisotropicStiffnessTensor,A))
@@ -238,12 +234,11 @@ function mult!{R}(stress::Stress{R},
   if norm(stiffness.normal) > 0.0
     return mult!(
                  stress,
-                 transformation(
-                                stiffness.Stiffnesses,
-                                stiffness.volumes,
-                                stiffness.normal,
-                                stiffness.transformation
-                               ),
+                 laminateFormula(
+                                 stiffness.Stiffnesses,
+                                 stiffness.volumes,
+                                 stiffness.normal
+                                ),
                  strain
                 )
   else
@@ -373,12 +368,11 @@ function convert(::Type{AnisotropicStiffnessTensor},
 
   if norm(stiffness.normal) > 0.0
     return convert(AnisotropicStiffnessTensor,
-                   transformedLaminateFormula(
-                                              stiffness.Stiffnesses,
-                                              stiffness.volumes,
-                                              stiffness.normal,
-                                              stiffness.transformation
-                                             )
+                   laminateFormula(
+                                   stiffness.Stiffnesses,
+                                   stiffness.volumes,
+                                   stiffness.normal
+                                  )
                   ) :: AnisotropicStiffnessTensor
   else
     return convert(AnisotropicStiffnessTensor,
@@ -458,3 +452,24 @@ Base.inv(A :: DiagonalStiffnessTensor) = DiagonalStiffnessTensor(1.0./A.v)
 
 Base.inv(A :: S) where {S <: StiffnessTensor} =
 AnisotropicStiffnessTensor(inv(convert(AnisotropicStiffnessTensor,A).C))
+
+==(A :: IsotropicStiffnessTensor, B :: IsotropicStiffnessTensor) = 
+(A.lambda.val == B.lambda.val) && (A.mu.val == B.mu.val)
+
+==(A :: DiagonalStiffnessTensor, B :: DiagonalStiffnessTensor) = 
+(A.v == B.v)
+
+==(A :: TransversalIsotropicZStiffnessTensor, B ::
+   TransversalIsotropicZStiffnessTensor) =
+(A.E_p.val == B.E_p.val) && 
+(A.E_t.val == B.E_t.val) && 
+(A.nu_p.val == B.nu_p.val) && 
+(A.nu_pt.val == B.nu_pt.val) && 
+(A.nu_tp.val == B.nu_tp.val) && 
+(A.mu_t.val == B.mu_t.val)
+
+==(A :: AnisotropicStiffnessTensor, B :: AnisotropicStiffnessTensor) = 
+(A.C == B.C)
+
+==(A :: S1, B :: S2) where {S1 <: StiffnessTensor, S2 <: StiffnessTensor} =
+convert(AnisotropicStiffnessTensor,A) == convert(AnisotropicStiffnessTensor,B)

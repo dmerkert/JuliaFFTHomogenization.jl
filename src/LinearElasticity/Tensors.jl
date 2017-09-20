@@ -1,6 +1,8 @@
 export toVoigtSSymFourthOrder!,
        toInverseVoigtSSymFourthOrder!,
-       toVoigtSSymIdentity
+       toVoigtSSymIdentity,
+       toMandelFromVoigt!,
+       toVoigtFromMandel!
 
 function toVoigtSSymFourthOrder!(T :: Array{R,2},f :: Function) where {R}
   T[1,1] = f(1,1,1,1) :: R
@@ -56,3 +58,14 @@ function toInverseVoigtSSymFourthOrder!(T :: Array{R,2}, f :: Function) where {R
   T
 end
 
+function toMandelFromVoigt!(T::Array{R,2}) where {R}
+  T[:,3:6] .*= sqrt(2.0)
+  T[3:6,:] .*= sqrt(2.0)
+  T
+end
+
+function toVoigtFromMandel!(T::Array{R,2}) where {R}
+  T[:,3:6] ./= sqrt(2.0)
+  T[3:6,:] ./= sqrt(2.0)
+  T
+end

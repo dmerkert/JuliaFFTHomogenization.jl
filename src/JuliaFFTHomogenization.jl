@@ -5,6 +5,7 @@ import Base.*
 import Base./
 import Base.+
 import Base.-
+import Base.==
 import Base.getindex
 import Base.norm
 import Base.promote_rule
@@ -41,6 +42,7 @@ include("LinearElasticity/ReferenceTensor.jl")
 include("LinearElasticity/Tensors.jl")
 
 include("LinearElasticity/Laminate.jl")
+include("LinearElasticity/Subsampling.jl")
 
 include("Misc/Misc.jl")
 include("Misc/Ellipsoids.jl")
