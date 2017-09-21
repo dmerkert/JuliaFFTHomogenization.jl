@@ -116,7 +116,7 @@ end
 function eig(A :: AnisotropicStiffnessTensor)
   C = copy(A.C)
   toMandelFromVoigt!(C)
-  eigvals(C)
+  real(eigvals(C))
 end
 eig{S <: StiffnessTensor}(A :: S) = eig(convert(AnisotropicStiffnessTensor,A))
 

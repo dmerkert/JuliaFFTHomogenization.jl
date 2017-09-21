@@ -64,7 +64,7 @@ function _eigBounds(
   maxOfMaxEig = typemin(Float64)
 
   for i in R
-    eigs = eig(stiffness[i])::Array{Float64}
+    eigs = eig(stiffness[i])::Array{Float64,1}
     minE = min(eigs...)::Float64
     maxE = max(eigs...)::Float64
 
