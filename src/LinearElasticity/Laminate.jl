@@ -122,20 +122,23 @@ function laminateFormula(
   #= C = inv(C) =#
   #= C = C + λId =# 
 
-  (
-   inv(
-       1.0/λ .* (
-                 inv(
-                     sum(
-                         volumes.*
-                         inv.(
-                              PC .+ λ*inv.(Stiffnesses .- λId)
-                             )
-                        )
-                    ) .- PC
-                )
-      ) .+ λId 
-  ) :: AnisotropicStiffnessTensor
+  A = (
+       inv(
+           1.0/λ .* (
+                     inv(
+                         sum(
+                             volumes.*
+                             inv.(
+                                  PC .+ λ*inv.(Stiffnesses .- λId)
+                                 )
+                            )
+                        ) .- PC
+                    )
+          ) .+ λId 
+      ) :: AnisotropicStiffnessTensor
+
+  0.5(A+A')
+
   #= inv( =#
   #=     1.0/λ .* ( =#
   #=               inv( =#
@@ -157,4 +160,8 @@ function _checkStiff(Stiffnesses)
   end
 
   yyy
+end
+
+function symmetricity(C :: Array{R,2}) where {R}
+  norm(C - 0.5(C + C'))/norm(C)
 end
