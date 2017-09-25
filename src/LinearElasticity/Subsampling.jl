@@ -5,7 +5,8 @@ function subsamplingComposites(
                                LSub :: Lattice,
                                LDecomposition :: Lattice,
                                stiffness :: CoefficientTensorField{T,N},
-                               compositeType :: Type{CompositeType}
+                               compositeType :: Type{CompositeType};
+                               evaluateComposites :: Bool = false
                               ) where {
                                        T,
                                        N,
@@ -42,7 +43,14 @@ function subsamplingComposites(
       end
     end
 
-    C[coordSub] = compositeType(CList,volumes)
+    if evaluateComposites
+      C[coordSub] = convert(
+                            AnisotropicStiffnessTensor,
+                            compositeType(CList,volumes)
+                           )
+    else
+      C[coordSub] = compositeType(CList,volumes)
+    end
   end
 
   C
@@ -54,7 +62,8 @@ function subsamplingComposites(
                                LDecomposition :: Lattice,
                                stiffness :: CoefficientTensorField{T,N},
                                compositeType ::
-                               Type{CompositeLaminateStiffnessTensor}
+                               Type{CompositeLaminateStiffnessTensor};
+                               evaluateComposites :: Bool = false
                               ) where {
                                        T,
                                        N
@@ -117,9 +126,23 @@ function subsamplingComposites(
       @assert !any(isnan.(normal))
 
       if norm(normal) ≈ 0.0
-        C[coordSub] = CompositeArithmeticMeanStiffnessTensor(CList,volumes)
+        if evaluateComposites
+          C[coordSub] = convert(
+                                AnisotropicStiffnessTensor,
+                                CompositeArithmeticMeanStiffnessTensor(CList,volumes)
+                               )
+        else
+          C[coordSub] = CompositeArithmeticMeanStiffnessTensor(CList,volumes)
+        end
       else
-        C[coordSub] = compositeType(CList,volumes,normal)
+        if evaluateComposites
+          C[coordSub] = convert(
+                                AnisotropicStiffnessTensor,
+                                compositeType(CList,volumes,normal)
+                               )
+        else
+          C[coordSub] = compositeType(CList,volumes,normal)
+        end
       end
 
     else
@@ -135,7 +158,8 @@ function subsamplingComposites(
                                LSub :: Lattice,
                                LDecomposition :: Lattice,
                                problem :: LinearElasticityProblem,
-                               compositeType :: Type{CompositeType}
+                               compositeType :: Type{CompositeType};
+                               evaluateComposites :: Bool = false
                               ) where {CompositeType}
   LinearElasticityProblem(
                           LSub,
@@ -144,7 +168,8 @@ function subsamplingComposites(
                                                 LSub,
                                                 LDecomposition,
                                                 problem.stiffness,
-                                                compositeType
+                                                compositeType;
+                                                evaluateComposites=evaluateComposites
                                                ),
                           problem.macroscopicStrain
                          )
@@ -154,7 +179,8 @@ function subsamplingComposites(
                                LSuper :: Lattice,
                                LSub :: Lattice,
                                problem :: LinearElasticityProblem,
-                               compositeType :: Type{CompositeType}
+                               compositeType :: Type{CompositeType};
+                               evaluateComposites :: Bool = false
                               ) where {CompositeType}
 
   LDecomposition = Lattice(round.(Int,LSuper.M*inv(LSub.M)))
@@ -166,8 +192,8 @@ function subsamplingComposites(
                                                 LSub,
                                                 LDecomposition,
                                                 problem.stiffness,
-                                                compositeType
-                                               ),
+                                                compositeType;
+                                                evaluateComposites=evaluateComposites                                               ),
                           problem.macroscopicStrain
                          )
 end
