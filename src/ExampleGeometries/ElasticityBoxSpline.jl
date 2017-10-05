@@ -16,7 +16,10 @@ function ElasticityBoxSpline(
     YoungsModuli[coord] = ckPeriodicBoxSpline(scaling.M'\freq,Xi)*lattice.m
   end
 
-  YoungsModuli = real(patternifft(YoungsModuli,lattice)).+1.0
+  YoungsModuli = real(patternifft(YoungsModuli,lattice))
+  mi=minimum(YoungsModuli[:])
+  ma=maximum(YoungsModuli[:])
+  YoungsModuli = YoungsModuli + (abs(mi) +1.0+0.1abs(ma))
   @assert all(YoungsModuli .> 0.0)
 
   for coord in getSamplingIterator(lattice)
