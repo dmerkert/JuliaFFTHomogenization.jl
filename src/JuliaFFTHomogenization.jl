@@ -46,9 +46,11 @@ include("LinearElasticity/Subsampling.jl")
 
 include("Misc/Misc.jl")
 include("Misc/Ellipsoids.jl")
+include("Misc/BoxSpline.jl")
 
 include("ExampleGeometries/ElasticityHashinEllipsoid.jl")
 include("ExampleGeometries/Elasticity1DLaminate.jl")
 include("ExampleGeometries/ElasticitySingleFiber.jl")
+include("ExampleGeometries/ElasticityBoxSpline.jl")
 
 end # module

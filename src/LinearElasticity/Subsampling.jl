@@ -31,7 +31,9 @@ function subsamplingComposites(
     volumes = [0.0]
 
     for coordDecomposition in getSamplingIterator(LDecomposition)
-      point = pointSub + LSub.M\getSamplingPoint(LDecomposition,coordDecomposition)
+
+      point = 2.0.*pi.*modM((pointSub +
+                                      LSub.M\getSamplingPoint(LDecomposition,coordDecomposition))./(2.0.*pi),eye(Int64,LSuper.d))
       coordSuper = CartesianIndex(((getPatternBasisDecomp(LSuper,point)+1)...))
 
       CIndex = findfirst(stiffness[coordSuper] .== CList)
