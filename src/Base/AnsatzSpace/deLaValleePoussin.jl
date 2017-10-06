@@ -1,4 +1,4 @@
-export deLaValleePoussinMeansSpace
+export deLaValleePoussinMeansSpace, bracketSum, ck, bracketSumRange
 
 type deLaValleePoussinMeansSpace{R <: AbstractFloat} <: OrthonormalTranslationInvariantSpace
   slope :: Array{R,1}
@@ -36,4 +36,8 @@ function ck(
                         space.slope,
                         true
                        )
+end
+
+function bracketSumRange(space :: deLaValleePoussinMeansSpace)
+  (-1,1)
 end

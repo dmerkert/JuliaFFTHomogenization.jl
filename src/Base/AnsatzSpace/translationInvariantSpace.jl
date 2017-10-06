@@ -89,6 +89,11 @@ function bracketSum(
   error("bracketSum not implemented!")
 end
 
+function bracketSumRange(space :: Space) where {Space <:
+                                                TranslationInvariantSpace}
+  error("bracketSumRange not implemented!")
+end
+
 function ck(
             frequency :: Array{I,1},
             space :: Space,
