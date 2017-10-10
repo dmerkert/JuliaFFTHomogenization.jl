@@ -7,23 +7,22 @@ function ElasticityBoxSpline(
                             ) where {N}
 
   C = CoefficientTensorField{IsotropicStiffnessTensor}(lattice.size)
-  λ = LamesFirstParameter(0.3)
+  ν = PoissonsRatio(0.3)
 
   YoungsModuli = Array{Float64}(lattice.size)
 
   for coord in getFrequencyIterator(lattice)
     freq = getFrequencyPoint(lattice,coord)
-    YoungsModuli[coord] = ckPeriodicBoxSpline(scaling.M'\freq,Xi)*lattice.m
+    YoungsModuli[coord] = ckPeriodicBoxSpline(scaling.M'\freq,Xi)
   end
 
+  YoungsModuli[1] = 2.0*lattice.m
+
   YoungsModuli = real(patternifft(YoungsModuli,lattice))
-  mi=minimum(YoungsModuli[:])
-  ma=maximum(YoungsModuli[:])
-  YoungsModuli = YoungsModuli + (abs(mi) +1.0+0.1abs(ma))
   @assert all(YoungsModuli .> 0.0)
 
   for coord in getSamplingIterator(lattice)
-    C[coord] = IsotropicStiffnessTensor(λ,YoungsModulus(YoungsModuli[coord]))
+    C[coord] = IsotropicStiffnessTensor(ν,YoungsModulus(YoungsModuli[coord]))
   end
 
   strain0 = Strain([1.0;0.0;0.0;0.0;0.0;0.0])
