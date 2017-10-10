@@ -20,21 +20,43 @@ function subsamplingComposites(
 
   for coordSub in getSamplingIterator(LSub)
     pointSub = getSamplingPoint(LSub,coordSub)
-    CList =
-    [
-     stiffness[
-               CartesianIndex(
-                              ((getPatternBasisDecomp(LSuper,pointSub)+1)...)
-                             )
-              ]
-    ]
+    coordSuper = getSuperpatternIndex(
+                                      CartesianIndex((zeros(Int,length(LSuper.size))...)),
+                                      coordSub,
+                                      LSub,
+                                      LSuper,
+                                      LDecomposition
+                                     )
+
+    CList = [stiffness[coordSuper]]
     volumes = [0.0]
 
     for coordDecomposition in getSamplingIterator(LDecomposition)
+      point = getSuperpatternPoint(
+                                   coordDecomposition,
+                                   pointSub,
+                                   LSub,
+                                   LDecomposition
+                                  )
+      coordSuper = getSuperpatternIndex(
+                                        coordDecomposition,
+                                        coordSub,
+                                        LSub,
+                                        LSuper,
+                                        LDecomposition
+                                       )
 
-      point = 2.0.*pi.*modM((pointSub +
-                                      LSub.M\getSamplingPoint(LDecomposition,coordDecomposition))./(2.0.*pi),eye(Int64,LSuper.d))
-      coordSuper = CartesianIndex(((getPatternBasisDecomp(LSuper,point)+1)...))
+      #= point = 2.0.*pi.*modM( =#
+      #=                       ( =#
+      #=                        pointSub + =#
+      #=                        LSub.M\ getSamplingPoint( =#
+      #=                                                 LDecomposition, =#
+      #=                                                 coordDecomposition) =#
+      #=                       )./(2.0.*pi), =#
+      #=                       eye(Int64,LSuper.d), =#
+      #=                       LSuper.target =#
+      #=                      ) =#
+      #= coordSuper = CartesianIndex(((getPatternBasisDecomp(LSuper,point)+1)...)) =#
 
       CIndex = findfirst(stiffness[coordSuper] .== CList)
       if CIndex > 0
@@ -78,19 +100,30 @@ function subsamplingComposites(
 
   for coordSub in getSamplingIterator(LSub)
     pointSub = getSamplingPoint(LSub,coordSub)
-    CList =
-    [
-     stiffness[
-               CartesianIndex(
-                              ((getPatternBasisDecomp(LSuper,pointSub)+1)...)
-                             )
-              ]
-    ]
+    coordSuper = getSuperpatternIndex(
+                                      CartesianIndex((zeros(Int,length(LSuper.size))...)),
+                                      coordSub,
+                                      LSub,
+                                      LSuper,
+                                      LDecomposition
+                                     )
+    CList = [stiffness[coordSuper]]
     volumes = [0.0]
 
     for coordDecomposition in getSamplingIterator(LDecomposition)
-      point = pointSub + LSub.M\getSamplingPoint(LDecomposition,coordDecomposition)
-      coordSuper = CartesianIndex(((getPatternBasisDecomp(LSuper,point)+1)...))
+      point = getSuperpatternPoint(
+                                   coordDecomposition,
+                                   pointSub,
+                                   LSub,
+                                   LDecomposition
+                                  )
+      coordSuper = getSuperpatternIndex(
+                                        coordDecomposition,
+                                        coordSub,
+                                        LSub,
+                                        LSuper,
+                                        LDecomposition
+                                       )
 
       CIndex = findfirst(stiffness[coordSuper] .== CList)
       if CIndex > 0
@@ -111,8 +144,19 @@ function subsamplingComposites(
       nSubvoxel = 0
 
       for coordDecomposition in getSamplingIterator(LDecomposition)
-        point = pointSub + LSub.M\getSamplingPoint(LDecomposition,coordDecomposition)
-        coordSuper = CartesianIndex(((getPatternBasisDecomp(LSuper,point)+1)...))
+      point = getSuperpatternPoint(
+                                   coordDecomposition,
+                                   pointSub,
+                                   LSub,
+                                   LDecomposition
+                                  )
+      coordSuper = getSuperpatternIndex(
+                                        coordDecomposition,
+                                        coordSub,
+                                        LSub,
+                                        LSuper,
+                                        LDecomposition
+                                       )
 
         centerSubvoxel += point
         nSubvoxel += 1

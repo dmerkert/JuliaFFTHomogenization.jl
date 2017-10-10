@@ -93,7 +93,7 @@ function normDifference(field1 :: StrainField{R,N1},
                                 Space <: AnsatzSpace
                                }
     #assumes that L2 is a tensor product lattice
-    @argcheck norm(diagm(diag(L2.M))-L2.M) < 1e-12
+    #= @argcheck norm(diagm(diag(L2.M))-L2.M) < 1e-12 =#
     #assumes that L1 generates subpattern of L2
     @argcheck isSublattice(L2,L1)
 
