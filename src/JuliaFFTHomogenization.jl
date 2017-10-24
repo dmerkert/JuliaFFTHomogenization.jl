@@ -55,5 +55,6 @@ include("ExampleGeometries/Elasticity1DLaminate.jl")
 include("ExampleGeometries/ElasticitySingleFiber.jl")
 include("ExampleGeometries/ElasticityBoxSpline.jl")
 include("ExampleGeometries/ElasticitySpline.jl")
+include("ExampleGeometries/ElasticityPeriodicSmoothSpline.jl")
 
 end # module
